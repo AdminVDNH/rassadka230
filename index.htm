@@ -1,0 +1,1469 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Схема рассадки — совещания</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Рассадка">
+<meta name="theme-color" content="#183c34">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23183c34'/%3E%3Crect x='36' y='14' width='28' height='72' rx='4' fill='%2368442b'/%3E%3Ccircle cx='22' cy='28' r='7' fill='%23e5e7e6'/%3E%3Ccircle cx='22' cy='50' r='7' fill='%23e5e7e6'/%3E%3Ccircle cx='22' cy='72' r='7' fill='%23e5e7e6'/%3E%3Ccircle cx='78' cy='28' r='7' fill='%23e5e7e6'/%3E%3Ccircle cx='78' cy='50' r='7' fill='%23e5e7e6'/%3E%3Ccircle cx='78' cy='72' r='7' fill='%23e5e7e6'/%3E%3C/svg%3E">
+<style>
+:root { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #25302b; background: #eef1ee; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, input { font: inherit; }
+button { cursor: pointer; }
+.seat, .item, .dev, .meeting, button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
+header { padding: 12px 20px; color: #fff; background: #183c34; display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap; }
+header h1 { margin: 0; font-size: 20px; }
+header small { color: #c8dfd3; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+button.primary, button.secondary { border: 0; border-radius: 9px; padding: 8px 13px; font-weight: 650; }
+button.primary { background: #d7b478; color: #25251d; }
+button.secondary { background: #e8f1eb; color: #183c34; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+
+.tech { background: #fff; border-bottom: 1px solid #dde5df; padding: 6px 14px; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.tech-col { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; min-width: 0; }
+.tech-sep { width: 1px; height: 26px; background: #e4e9e1; }
+.tech label { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: #3d5c4b; }
+.tech input { border: 1px solid #cbd7cd; border-radius: 6px; padding: 4px 6px; font-size: 12px; font-weight: 400; color: #26372c; }
+.tech input#deviceName { width: 96px; }
+.tech input#syncCode { width: 82px; letter-spacing: 2px; font-weight: 800; font-size: 13px; padding: 3px 6px; }
+.tech button { padding: 4px 9px; font-size: 12px; border-radius: 7px; }
+details.conn { position: relative; font-size: 11px; }
+details.conn summary { list-style: none; cursor: pointer; padding: 4px 7px; border-radius: 6px; background: #f1f5f1; color: #3d5c4b; font-weight: 700; user-select: none; }
+details.conn summary::-webkit-details-marker { display: none; }
+details.conn .conn-pop { position: absolute; left: 0; top: calc(100% + 6px); z-index: 50; background: #fff; border: 1px solid #cbd7cd; border-radius: 10px; padding: 10px; box-shadow: 0 8px 24px #0002; width: min(420px, 90vw); display: grid; gap: 8px; }
+details.conn .conn-pop label { display: grid; gap: 3px; }
+details.conn .conn-pop input { width: 100%; }
+.tech .hint { font-size: 11px; color: #62746a; margin: 0; }
+#status, #syncStatus { font-size: 11px; line-height: 1.3; }
+#status.bad { color: #a52929; }
+#status.warn { color: #9a6a12; }
+#status.good { color: #286a41; }
+#syncStatus { color: #6b6250; }
+#syncStatus.ok { color: #286a41; font-weight: 700; }
+#syncStatus.err { color: #a52929; }
+#qrWrap { display: inline-flex; gap: 6px; align-items: center; }
+#qrWrap[hidden] { display: none; }
+#qrWrap img { width: 42px; height: 42px; border: 1px solid #d8cfae; border-radius: 6px; background: #fff; }
+#qrCodeBig { font-size: 15px; font-weight: 800; letter-spacing: 2px; }
+
+main { display: grid; grid-template-columns: minmax(195px, 245px) minmax(0, 1fr) minmax(210px, 260px); gap: 12px; padding: 12px; max-width: 1800px; margin: auto; }
+.panel, .workspace { background: #fff; border: 1px solid #dce6dd; border-radius: 14px; box-shadow: 0 4px 18px #253b3010; }
+.panel { padding: 14px; min-height: 540px; }
+.panel h2, .workspace h2 { margin: 0 0 10px; font-size: 16px; }
+.panel p, .muted { font-size: 12px; color: #66756c; }
+#meetings, #people, #equipment { display: grid; align-content: start; gap: 7px; }
+.meeting { width: 100%; text-align: left; border: 1px solid #e0e7df; border-radius: 9px; background: #f8faf7; padding: 9px; color: #263a30; overflow-wrap: anywhere; }
+.meeting .mt { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.meeting.active { background: #e8f3e8; border-color: #73a381; }
+.meeting small { display: block; color: #66756c; margin-top: 3px; }
+
+.workspace { padding: 13px 12px; min-width: 0; }
+.workspace-top { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+.workspace-top h2 { margin: 0; }
+#meetingMeta { font-size: 12px; color: #66756c; }
+.controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.counter { display: flex; align-items: center; gap: 7px; background: #f1f5f1; padding: 4px 7px; border-radius: 9px; font-size: 12px; }
+.counter button { width: 25px; height: 25px; border: 0; border-radius: 6px; background: #d7e6d9; color: #214631; font-weight: bold; }
+#resetBtn { border: 1px solid #d8a9a9; background: #fdf0f0; color: #8a2a2a; border-radius: 9px; padding: 6px 14px; font-weight: 700; }
+#resetBtn:disabled { opacity: .45; cursor: not-allowed; }
+#numHint { margin-top: 8px; }
+
+#stageScroll { overflow: auto; width: 100%; margin-top: 10px; -webkit-overflow-scrolling: touch; }
+#stage { height: min(820px, max(620px, calc(100vh - 210px))); min-width: 740px; position: relative; border-radius: 13px; background: radial-gradient(ellipse at center, #f8f8f4, #e8eee8); border: 1px solid #e2e9e0; }
+.empty { padding: 24px; color: #647269; text-align: center; }
+.table { position: absolute; background: repeating-linear-gradient(91deg, #433020 0px, #523823 13px, #392a20 16px, #63432b 31px, #38271d 36px), #493221; border: 9px solid #38271f; border-radius: 20px; box-shadow: inset 0 0 0 2px #947452, 0 13px 22px #292d2547; }
+.table::after { content: ""; position: absolute; inset: 9px; border: 1px solid #a789613d; border-radius: 10px; pointer-events: none; }
+.monitor { position: absolute; width: 24px; height: 16px; transform: translate(-50%, -50%); border: 2px solid #b9c5c4; border-radius: 2px; background: #263c40; box-shadow: 0 2px 1px #1a1d1a8a; }
+.monitor::after { content: ""; position: absolute; left: 8px; bottom: -6px; width: 4px; height: 4px; background: #abb8b7; }
+
+.seat { position: absolute; border: 1px solid #a5ada9; border-radius: 11px; background: #e5e7e6; box-shadow: inset 0 -6px 0 #c9cfcb, 0 3px 6px #1f33201a; padding: 3px 8px 6px; text-align: center; color: #29372f; display: flex; align-items: center; justify-content: center; flex-direction: column; overflow: hidden; line-height: 1.12; }
+.seat > * { pointer-events: none; }
+.seat.head { border-color: #b99a62; }
+.seat.occupied { background: #e5f1e7; border-color: #79a083; cursor: grab; }
+.seat.occupied:active { cursor: grabbing; }
+.seat.drag-over { outline: 3px solid #d09b48; }
+.seat .name { font-size: 11.5px; font-weight: 750; width: 100%; overflow: hidden; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.seat.occupied .name { font-size: 14px; font-weight: 800; text-transform: uppercase; line-height: 1.08; }
+.seat .tag { color: #718070; font-size: 10px; }
+.seat .name.ceo-name { color: #c81e1e; }
+.seat .ceo-tag { color: #c81e1e; font-size: 9.5px; font-weight: 800; letter-spacing: .3px; }
+
+.seat-num { position: absolute; border-radius: 50%; background: #183c34; color: #fff; font-weight: 800; display: grid; place-items: center; pointer-events: none; box-shadow: 0 2px 5px #0004; border: 2px solid #fff; z-index: 5; line-height: 1; }
+.seat-num.ceo { background: #a07c2e; }
+
+body.has-selected-person .seat { outline: 1px dashed #9db89f; }
+.dock { position: absolute; display: flex; flex-wrap: wrap; gap: 3px; align-content: center; align-items: center; border-radius: 8px; padding: 2px; }
+.dock.L { justify-content: flex-end; }
+.dock.R { justify-content: flex-start; }
+.dock.H { justify-content: center; flex-wrap: nowrap; }
+body.drag-device .dock, body.has-selected-device .dock, body.drag-device #people .item, body.has-selected-device #people .item { outline: 1px dashed #c7a46a; }
+body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; }
+.dock.drag-over { outline: 2px solid #d09b48 !important; background: #fbecd0 !important; }
+.dev { width: var(--s, 20px); height: var(--s, 20px); border-radius: 6px; background: #fffdf7; border: 1px solid #c9ad78; display: grid; place-items: center; font-size: calc(var(--s, 20px) * .62); line-height: 1; cursor: grab; position: relative; box-shadow: 0 1px 3px #3b2a1530; user-select: none; min-width: 20px; min-height: 20px; }
+.dev:active { cursor: grabbing; }
+.dev.selected { outline: 2px solid #d09b48; }
+.dev sub { position: absolute; right: 1px; bottom: 0; font-size: 8px; font-weight: 800; color: #7a6234; line-height: 1; }
+
+.item { border: 1px solid #d8e2d8; border-radius: 9px; padding: 8px 9px; background: #f8faf7; font-size: 13px; overflow-wrap: anywhere; cursor: grab; user-select: none; }
+.item:active { cursor: grabbing; }
+.item small { display: block; color: #718078; font-size: 11px; margin-top: 2px; }
+.item small.ceo-role { color: #c81e1e; font-weight: 800; }
+.item.ceo-item { color: #c81e1e; font-weight: 800; border-color: #e5a3a3; background: #fdf0f0; }
+.item.selected { outline: 2px solid #d09b48; }
+.item.drag-over { outline: 2px solid #d09b48; }
+.item-devs { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+.item-devs .dev { --s: 22px; width: 22px; height: 22px; font-size: 14px; }
+
+#equipment { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+#equipment .item { text-align: center; font-size: 12px; padding: 7px 3px; }
+#equipment.drag-over, #people.drag-over { background: #f3f8f2; border-radius: 9px; }
+.drop-return { border: 1px dashed #9aaa9a; border-radius: 9px; padding: 10px; margin: 9px 0; text-align: center; color: #52675a; font-size: 12px; }
+.drop-return.drag-over { background: #e7f2e7; }
+.divider { border: 0; border-top: 1px solid #e2e8e1; margin: 16px 0; }
+#ceoName { width: 100%; margin-top: 6px; padding: 8px; border: 1px solid #cbd7cd; border-radius: 8px; }
+#printArea { display: none; }
+#toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #183c34; color: #fff; padding: 10px 18px; border-radius: 12px; font-size: 13px; display: none; z-index: 9999; box-shadow: 0 6px 20px #0005; max-width: 92vw; text-align: center; }
+
+@media (max-width: 1050px) {
+  main { grid-template-columns: minmax(180px, 1fr) minmax(215px, 1fr); }
+  .workspace { grid-column: 1 / -1; grid-row: 2; }
+}
+@media (max-width: 820px) {
+  main { grid-template-columns: 1fr; }
+  .workspace { grid-column: 1; grid-row: 2; }
+  .panel { min-height: auto; }
+  #meetings { display: flex; overflow-x: auto; padding-bottom: 6px; }
+  .meeting { min-width: 230px; flex: 0 0 auto; }
+  #stage { min-width: 700px; }
+  .tech-sep { display: none; }
+}
+@media print {
+  @page { size: A4 portrait; margin: 8mm; }
+  body { background: #fff; }
+  header, .tech, main { display: none !important; }
+  #printArea { display: block; }
+  #printArea img { display: block; width: 100%; height: auto; max-height: 280mm; object-fit: contain; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Схема рассадки</h1><small>Совещания · участники · оборудование</small></div>
+  <div class="actions">
+    <button class="secondary" id="printBtn">Печать A4</button>
+    <button class="primary" id="saveBtn">Сохранить JPEG</button>
+  </div>
+</header>
+
+<section class="tech">
+  <div class="tech-col">
+    <button class="primary" id="refreshBtn" title="Обновить список совещаний сейчас">Обновить</button>
+    <button class="secondary" id="csvBtn" title="Импортировать локальный CSV при отсутствии сети">CSV</button>
+    <input id="csvFile" type="file" accept=".csv,text/csv" hidden>
+    <details class="conn">
+      <summary title="Постоянное подключение настроено автоматически">⚙</summary>
+      <div class="conn-pop">
+        <label>Постоянная ссылка на Google Таблицу
+          <input id="sheetUrl" value="https://docs.google.com/spreadsheets/d/1P9F-tx_hOs6YXFbtlD7sgNXV7cBKa22F-EtlL3nVl2M/edit?usp=sharing">
+        </label>
+        <label>Ключ Google Sheets API
+          <input id="apiKey" type="password" autocomplete="off" value="AIzaSyCzxjIebth6sWkckCp_UBmVgucupfQALeM">
+        </label>
+      </div>
+    </details>
+    <span class="hint">Автообновление: 10 сек.</span>
+    <span id="status" role="status">Подключение к Google Таблице…</span>
+  </div>
+  <div class="tech-sep"></div>
+  <div class="tech-col">
+    <label>Устройство <input id="deviceName"></label>
+    <label>Код <input id="syncCode" inputmode="numeric" autocomplete="off" placeholder="------" maxlength="10"></label>
+    <button class="primary" id="syncBtn">Подкл.</button>
+    <button class="secondary" id="syncNewBtn" title="Создать новый код синхронизации">Новый</button>
+    <button class="secondary" id="syncOffBtn" disabled>Выкл</button>
+    <span id="qrWrap" hidden><img id="qrImg" alt="QR"><b id="qrCodeBig"></b></span>
+    <span id="syncStatus">Синхр. выкл.</span>
+  </div>
+</section>
+
+<main>
+  <aside class="panel">
+    <h2>Запланированные совещания</h2>
+    <div id="meetings"></div>
+  </aside>
+
+  <section class="workspace">
+    <div class="workspace-top">
+      <div>
+        <h2 id="meetingTitle">Выберите совещание</h2>
+        <div id="meetingMeta"></div>
+      </div>
+      <div class="controls">
+        <div class="counter">Слева
+          <button data-side="L" data-change="-1" title="Убрать стул слева">−</button>
+          <b id="leftCount">5</b>
+          <button data-side="L" data-change="1" title="Добавить стул слева">+</button>
+        </div>
+        <div class="counter">Справа
+          <button data-side="R" data-change="-1" title="Убрать стул справа">−</button>
+          <b id="rightCount">5</b>
+          <button data-side="R" data-change="1" title="Добавить стул справа">+</button>
+        </div>
+        <button id="resetBtn" title="Вернуть всех в список, оборудование на панель, ГД во главу стола">Сброс</button>
+      </div>
+    </div>
+    <div class="muted" id="numHint">Номера — между стулом и столом. Слева и справа нумерация параллельная: № 1 — дальнее от ГД кресло, далее по порядку в сторону ГД.</div>
+    <div id="stageScroll"><div id="stage"></div></div>
+  </section>
+
+  <aside class="panel">
+    <h2>Участники без места <span id="freeCount"></span></h2>
+    <p>ПК: перетащите ФИО на стул. iPhone: тап по ФИО → тап по стулу. Если место занято, прежний участник вернётся в список.</p>
+    <div id="people"></div>
+    <div class="drop-return" id="returnZone">Перетащите сюда участника (или тапните при выбранном), чтобы освободить стул</div>
+    <hr class="divider">
+    <h2>Оборудование</h2>
+    <p>Закрепляется за любым участником (на стуле или в списке). Перетаскивается между участниками. Снять: перетащить обратно сюда или тапнуть по значку дважды.</p>
+    <div id="equipment"></div>
+    <hr class="divider">
+    <label style="font-size:12px;font-weight:700">ФИО генерального директора, если его нет в таблице
+      <input id="ceoName" value="Генеральный директор">
+    </label>
+    <p>Генеральный директор по умолчанию занимает место во главе стола. Его можно перетащить на любое другое место.</p>
+  </aside>
+</main>
+
+<div id="printArea"></div>
+<div id="toast"></div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = id => document.getElementById(id);
+
+  // Постоянный источник данных и ключ API (подключение выполняется автоматически)
+  const DEFAULT_URL = "https://docs.google.com/spreadsheets/d/1P9F-tx_hOs6YXFbtlD7sgNXV7cBKa22F-EtlL3nVl2M/edit?usp=sharing";
+  const DEFAULT_API_KEY = "AIzaSyCzxjIebth6sWkckCp_UBmVgucupfQALeM";
+  const STORE = "meeting-seating-v3";
+  const MONITOR_SLOTS = 5, MIN_SEATS = 5, MAX_SEATS = 15, REFRESH_MS = 10000;
+  const CEO_RE = /генерал\S*\s+директор|ген\.?\s*директор|гендиректор/i;
+
+  const devices = [
+    {id: "mouse1",    label: "Мышь 1",            icon: "🖱", n: "1"},
+    {id: "mouse2",    label: "Мышь 2",            icon: "🖱", n: "2"},
+    {id: "mouse3",    label: "Мышь 3",            icon: "🖱", n: "3"},
+    {id: "keyboard1", label: "Клавиатура 1",      icon: "⌨", n: "1"},
+    {id: "keyboard2", label: "Клавиатура 2",      icon: "⌨", n: "2"},
+    {id: "phone1",    label: "Телефонная трубка", icon: "☎", n: ""}
+  ];
+
+  let meetings = [], current = null, drag = null, selected = null, layouts = {};
+  let loading = false, localCsv = false, signature = "", pendingRender = false;
+  let applyingRemote = false, lastBcastSig = "", pendingRemoteMeeting = null;
+  let syncCode = null, peer = null, peerMode = "", conns = [], syncEnabled = false, lastSyncTs = 0;
+  const senderId = Math.random().toString(36).slice(2, 10);
+  let bcastTimer = 0, toastTimer = 0;
+
+  (function load() {
+    let saved = {};
+    try {
+      saved = JSON.parse(localStorage.getItem(STORE) || "null") ||
+              JSON.parse(localStorage.getItem("meeting-seating-v2") || "null") ||
+              JSON.parse(localStorage.getItem("meeting-seating-v1") || "{}") || {};
+    } catch (_) {}
+    layouts = saved.layouts || {};
+    // Всегда используем постоянную ссылку и ключ по умолчанию (если они не переопределены вручную на другой валидный ресурс)
+    const savedUrl = (saved.url || "").trim();
+    const hasValidSavedUrl = /\/spreadsheets\/d\/[a-zA-Z0-9_-]+/.test(savedUrl) && !savedUrl.includes("1P9F-tx_hOs6YXFbtlD7sgNXV7cBKa22F-EtlL3nVl2M");
+    $("sheetUrl").value = hasValidSavedUrl ? savedUrl : DEFAULT_URL;
+    $("apiKey").value = (saved.key && saved.key.trim()) ? saved.key.trim() : DEFAULT_API_KEY;
+    $("ceoName").value = saved.ceo || "Генеральный директор";
+    const isIPhone = /iPhone|iPad|iPod/i.test(navigator.userAgent || "");
+    $("deviceName").value = saved.device || (isIPhone ? "iPhone" : "ПК");
+    $("syncCode").value = saved.syncCode || "";
+    try {
+      const m = (location.hash || "").match(/sync=([A-Za-z0-9]+)/);
+      if (m) $("syncCode").value = m[1];
+    } catch (_) {}
+  })();
+
+  function persist() {
+    try {
+      localStorage.setItem(STORE, JSON.stringify({
+        layouts,
+        url: $("sheetUrl").value.trim() || DEFAULT_URL,
+        key: $("apiKey").value.trim() || DEFAULT_API_KEY,
+        ceo: $("ceoName").value,
+        device: $("deviceName").value,
+        syncCode: $("syncCode").value.trim()
+      }));
+    } catch (_) {}
+  }
+
+  function status(t, c) {
+    $("status").textContent = t;
+    $("status").className = c || "good";
+  }
+
+  function toast(t) {
+    const el = $("toast");
+    el.textContent = t;
+    el.style.display = "block";
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.style.display = "none"; }, 2300);
+  }
+
+  function setSyncStatus(t, cls) {
+    const el = $("syncStatus");
+    el.textContent = t;
+    el.className = cls || "";
+  }
+
+  const clean = v => String(v == null ? "" : v).replace(/\s+/g, " ").trim();
+  const cell = (row, i) => i < 0 ? "" : clean(row ? row[i] : "");
+
+  function csvParse(text) {
+    text = text.replace(/^\uFEFF/, "");
+    const first = text.split(/\r?\n/, 1)[0] || "";
+    const sep = ((first.match(/;/g) || []).length > (first.match(/,/g) || []).length) ? ";" : ",";
+    const rows = [];
+    let row = [], field = "", quoted = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (c === '"') {
+        if (quoted && text[i + 1] === '"') { field += '"'; i++; } else quoted = !quoted;
+      } else if (c === sep && !quoted) {
+        row.push(field); field = "";
+      } else if ((c === "\n" || c === "\r") && !quoted) {
+        if (c === "\r" && text[i + 1] === "\n") i++;
+        row.push(field); field = "";
+        rows.push(row); row = [];
+      } else field += c;
+    }
+    row.push(field);
+    rows.push(row);
+    return rows;
+  }
+
+  function indices(rows) {
+    const re = /фио\s*приглаш|ф\.?\s*и\.?\s*о\.?\s*приглаш/i;
+    const headerIndex = rows.findIndex((row, i) => i < 30 && (row || []).some(x => re.test(clean(x))));
+    if (headerIndex < 0) throw Error("не найдена колонка «ФИО приглашенного».");
+    const h = rows[headerIndex].map(x => clean(x).toLowerCase());
+    const find = r => h.findIndex(x => r.test(x));
+    return {
+      headerIndex,
+      name: find(re),
+      notes: find(/примечан/),
+      date: find(/дат/),
+      time: find(/врем/),
+      role: find(/должност|роль/)
+    };
+  }
+
+  function sheetIdentity() {
+    const url = $("sheetUrl").value.trim() || DEFAULT_URL;
+    const id = (url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/) || [])[1];
+    if (!id) throw Error("укажите корректную ссылку на Google Таблицу.");
+    const explicitGid = (url.match(/[?&#]gid=(\d+)/) || [])[1] || null;
+    return {id, gid: explicitGid || "0", explicitGid};
+  }
+
+  function safeIdentity() {
+    try { return sheetIdentity(); } catch (_) { return {id: "local", gid: "0", explicitGid: null}; }
+  }
+
+  function rangeStart(range) {
+    const m = String(range || "").match(/!\$?([A-Z]+)\$?(\d+)/i);
+    if (!m) return {row: 0, col: 0};
+    let col = 0;
+    for (const ch of m[1].toUpperCase()) col = col * 26 + ch.charCodeAt(0) - 64;
+    return {row: Number(m[2]) - 1, col: col - 1};
+  }
+
+  function getJson(url) {
+    return fetch(url, {cache: "no-store"}).then(r =>
+      r.json().catch(() => null).then(body => {
+        if (!r.ok) throw Error(body && body.error && body.error.message ? r.status + ": " + body.error.message : "HTTP " + r.status);
+        return body;
+      })
+    );
+  }
+
+  function readViaApi(id, sid, key) {
+    const k = encodeURIComponent(key);
+    return getJson("https://sheets.googleapis.com/v4/spreadsheets/" + id + "?fields=sheets(properties(sheetId,title),merges)&key=" + k).then(meta => {
+      const sheets = meta.sheets || [];
+      const sheet = (sid.explicitGid ? sheets.filter(s => String((s.properties || {}).sheetId || 0) === sid.explicitGid)[0] : null) || sheets[0];
+      if (!sheet) throw Error("в таблице нет листов");
+      const range = "'" + sheet.properties.title.replace(/'/g, "''") + "'";
+      return getJson("https://sheets.googleapis.com/v4/spreadsheets/" + id + "/values/" + encodeURIComponent(range) + "?valueRenderOption=FORMATTED_VALUE&key=" + k).then(data => {
+        const st = rangeStart(data.range);
+        const rows = [];
+        for (let i = 0; i < st.row; i++) rows.push([]);
+        for (const r of (data.values || [])) rows.push(Array(st.col).fill("").concat(r));
+        return {rows, merges: sheet.merges || [], exact: true};
+      });
+    });
+  }
+
+  function readViaCsv(id, sid) {
+    const gidParam = sid.explicitGid ? "&gid=" + sid.explicitGid : "";
+    return fetch("https://docs.google.com/spreadsheets/d/" + id + "/gviz/tq?tqx=out:csv" + gidParam + "&t=" + Date.now(), {cache: "no-store"}).then(r => {
+      if (!r.ok) throw Error("HTTP " + r.status);
+      return r.text();
+    }).then(text => {
+      if (/^\s*</.test(text)) throw Error("нет доступа к таблице");
+      return {rows: csvParse(text), merges: [], exact: false};
+    });
+  }
+
+  function readSheet() {
+    const sid = sheetIdentity();
+    const key = $("apiKey").value.trim() || DEFAULT_API_KEY;
+    if (!key) return readViaCsv(sid.id, sid);
+    return readViaApi(sid.id, sid, key).catch(apiErr =>
+      readViaCsv(sid.id, sid).then(d => { d.apiError = apiErr.message; return d; }).catch(csvErr => {
+        throw Error("API — " + apiErr.message + "; CSV — " + csvErr.message);
+      })
+    );
+  }
+
+  function extract(data, sid) {
+    const rows = data.rows, col = indices(rows);
+    if (col.notes < 0) throw Error("не найдена колонка «Примечания».");
+    const merges = (data.merges || []).map(m => ({
+      sr: m.startRowIndex || 0,
+      er: Math.min(m.endRowIndex == null ? rows.length : m.endRowIndex, rows.length),
+      sc: m.startColumnIndex || 0,
+      ec: m.endColumnIndex == null ? Infinity : m.endColumnIndex
+    }));
+    const mergeOf = new Map();
+    const cols = [col.notes, col.date, col.time].filter(c => c >= 0);
+    for (const c of cols) {
+      for (const m of merges) {
+        if (m.sc <= c && m.ec > c) {
+          for (let r = m.sr; r < m.er; r++) mergeOf.set(r + ":" + c, m);
+        }
+      }
+    }
+    const value = (r, c) => {
+      if (c < 0) return "";
+      const m = mergeOf.get(r + ":" + c);
+      return m ? cell(rows[m.sr], m.sc) : cell(rows[r], c);
+    };
+    const result = [], idCount = {};
+    let csvKey = "", csvNote = "";
+    for (let r = col.headerIndex + 1; r < rows.length; r++) {
+      const name = cell(rows[r], col.name);
+      if (!name) {
+        if (!data.exact) { csvKey = ""; csvNote = ""; }
+        continue;
+      }
+      let note, key;
+      if (data.exact) {
+        const m = mergeOf.get(r + ":" + col.notes);
+        note = value(r, col.notes);
+        key = m ? "m" + m.sr : "s" + r;
+      } else {
+        const raw = cell(rows[r], col.notes);
+        if (raw) { csvKey = "c" + r; csvNote = raw; }
+        note = raw || csvNote;
+        key = csvKey || "s" + r;
+      }
+      let mtg = result[result.length - 1];
+      if (!mtg || mtg.key !== key) {
+        const date = value(r, col.date), time = value(r, col.time);
+        const title = note || ("Совещание без примечания (строка " + (r + 1) + ")");
+        const base = [sid.id, sid.gid, date, time, title].join("|");
+        idCount[base] = (idCount[base] || 0) + 1;
+        mtg = {id: idCount[base] > 1 ? base + "#" + idCount[base] : base, key, title, date, time, people: [], _n: {}};
+        result.push(mtg);
+      }
+      const base = name.toLowerCase();
+      mtg._n[base] = (mtg._n[base] || 0) + 1;
+      mtg.people.push({id: "p:" + base + "#" + mtg._n[base], name, role: cell(rows[r], col.role)});
+    }
+    return result;
+  }
+
+  function isCeo(p) {
+    const configured = clean($("ceoName").value).toLowerCase();
+    return CEO_RE.test(p.role + " " + p.name) || (configured && p.name.toLowerCase() === configured);
+  }
+
+  function members(m) {
+    if (!m) return [];
+    const people = m.people.slice();
+    if (!people.some(isCeo)) {
+      people.unshift({id: "ceo", name: clean($("ceoName").value) || "Генеральный директор", role: "Генеральный директор"});
+    }
+    return people;
+  }
+
+  const clamp = v => Math.max(MIN_SEATS, Math.min(MAX_SEATS, Number(v) || MIN_SEATS));
+
+  function layout() {
+    if (!current) return null;
+    if (!layouts[current.id]) layouts[current.id] = {L: 5, R: 5, seats: {}, equipment: {}, ceoAuto: false};
+    const l = layouts[current.id];
+    l.L = clamp(l.L);
+    l.R = clamp(l.R);
+    l.seats = l.seats || {};
+    l.equipment = l.equipment || {};
+    const all = members(current), valid = {};
+    all.forEach(p => { valid[p.id] = 1; });
+    for (const seat of Object.keys(l.seats)) {
+      const pid = l.seats[seat];
+      const m = /^([LR])(\d+)$/.exec(seat);
+      if (!valid[pid] || (seat !== "head" && (!m || Number(m[2]) >= l[m[1]]))) delete l.seats[seat];
+    }
+    if (!l.ceoAuto) {
+      const boss = all.filter(isCeo)[0];
+      if (boss) {
+        let has = false;
+        for (const k in l.seats) if (l.seats[k] === boss.id) has = true;
+        if (!has && !l.seats.head) l.seats.head = boss.id;
+        l.ceoAuto = true;
+      }
+    }
+    for (const d of Object.keys(l.equipment)) {
+      const ok = devices.some(x => x.id === d);
+      if (!valid[l.equipment[d]] || !ok) delete l.equipment[d];
+    }
+    return l;
+  }
+
+  function make(tag, cls, text) {
+    const el = document.createElement(tag);
+    if (cls) el.className = cls;
+    if (text !== undefined) el.textContent = text;
+    return el;
+  }
+
+  function dropTarget(el, onDrop) {
+    el.addEventListener("dragover", e => {
+      e.preventDefault();
+      try { e.dataTransfer.dropEffect = "move"; } catch (_) {}
+      el.classList.add("drag-over");
+    });
+    el.addEventListener("dragleave", e => {
+      if (!el.contains(e.relatedTarget)) el.classList.remove("drag-over");
+    });
+    el.addEventListener("drop", e => {
+      e.preventDefault();
+      e.stopPropagation();
+      el.classList.remove("drag-over");
+      onDrop(getDrag(e));
+    });
+  }
+
+  function deviceBadge(d) {
+    const sel = selected && selected.type === "device" && selected.id === d.id;
+    const b = make("div", "dev" + (sel ? " selected" : ""));
+    b.draggable = true;
+    b.title = d.label + " — перетащите другому участнику или обратно в список. Тап — выбрать, второй тап — снять.";
+    b.appendChild(document.createTextNode(d.icon));
+    if (d.n) b.appendChild(make("sub", "", d.n));
+    b.addEventListener("dragstart", e => { e.stopPropagation(); beginDrag(e, {type: "device", id: d.id}); });
+    b.addEventListener("click", e => { e.stopPropagation(); onDeviceBadgeClick(d.id, d.label); });
+    return b;
+  }
+
+  function onDeviceBadgeClick(id, label) {
+    if (selected && selected.type === "device" && selected.id === id) {
+      const l = layout();
+      if (l) delete l.equipment[id];
+      selected = null;
+      render();
+      toast("Оборудование снято");
+    } else {
+      selected = {type: "device", id};
+      render();
+      toast(label + ": тапните участника для передачи или панель «Оборудование» для снятия");
+    }
+  }
+
+  function render() {
+    const menu = $("meetings");
+    menu.innerHTML = "";
+    if (!meetings.length) menu.appendChild(make("p", "muted", "Загрузка совещаний…"));
+    meetings.forEach(m => {
+      const b = make("button", "meeting" + (current && current.id === m.id ? " active" : ""));
+      b.appendChild(make("span", "mt", m.title));
+      b.appendChild(make("small", "", [m.date, m.time, m.people.length + " приглаш."].filter(Boolean).join(" · ")));
+      b.onclick = () => { current = m; selected = null; render(); };
+      menu.appendChild(b);
+    });
+
+    $("meetingTitle").textContent = current ? current.title : "Выберите совещание";
+    $("meetingMeta").textContent = current ? [current.date, current.time].filter(Boolean).join(" · ") : "";
+
+    const peopleBox = $("people"), stock = $("equipment"), stage = $("stage");
+    peopleBox.innerHTML = "";
+    stock.innerHTML = "";
+    document.body.classList.toggle("has-selected-device", !!(selected && selected.type === "device"));
+    document.body.classList.toggle("has-selected-person", !!(selected && selected.type === "person"));
+
+    const l = layout();
+    document.querySelectorAll("[data-side]").forEach(btn => {
+      const side = btn.getAttribute("data-side"), ch = Number(btn.getAttribute("data-change"));
+      btn.disabled = !l || (ch < 0 ? l[side] <= MIN_SEATS : l[side] >= MAX_SEATS);
+    });
+    $("leftCount").textContent = l ? l.L : MIN_SEATS;
+    $("rightCount").textContent = l ? l.R : MIN_SEATS;
+    $("resetBtn").disabled = !l;
+
+    if (!l) {
+      $("freeCount").textContent = "";
+      stage.innerHTML = "";
+      stage.appendChild(make("div", "empty", "Подключение к таблице совещаний…"));
+      persist();
+      return;
+    }
+
+    const all = members(current), seated = {};
+    for (const k in l.seats) seated[l.seats[k]] = 1;
+    const free = all.filter(p => !seated[p.id]);
+    $("freeCount").textContent = "(" + free.length + ")";
+
+    free.forEach(p => {
+      const pCeo = isCeo(p), pPh = p.id === "ceo";
+      const item = make("div", "item" + (pCeo && pPh ? " ceo-item" : ""), (pCeo && pPh) ? "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР" : p.name);
+      if (pCeo && !pPh) item.appendChild(make("small", "ceo-role", "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР"));
+      else if (p.role && !(pCeo && pPh)) item.appendChild(make("small", "", p.role));
+      const owned = devices.filter(d => l.equipment[d.id] === p.id);
+      if (owned.length) {
+        const wrap = make("div", "item-devs");
+        owned.forEach(d => wrap.appendChild(deviceBadge(d)));
+        item.appendChild(wrap);
+      }
+      item.draggable = true;
+      item.addEventListener("dragstart", e => beginDrag(e, {type: "person", id: p.id}));
+      item.onclick = () => {
+        if (selected && selected.type === "device") assignDeviceToPerson(p.id, selected.id);
+        else { selected = (selected && selected.type === "person" && selected.id === p.id) ? null : {type: "person", id: p.id}; render(); }
+      };
+      if (selected && selected.type === "person" && selected.id === p.id) item.classList.add("selected");
+      dropTarget(item, data => {
+        if (!data) return;
+        if (data.type === "device") assignDeviceToPerson(p.id, data.id);
+        else if (data.type === "person") returnDrop(data);
+      });
+      peopleBox.appendChild(item);
+    });
+    if (!free.length) peopleBox.appendChild(make("p", "", "Все участники размещены."));
+
+    devices.forEach(d => {
+      if (l.equipment[d.id]) return;
+      const item = make("div", "item", d.icon + " " + d.label);
+      item.draggable = true;
+      item.addEventListener("dragstart", e => beginDrag(e, {type: "device", id: d.id}));
+      item.onclick = () => { selected = (selected && selected.id === d.id) ? null : {type: "device", id: d.id}; render(); };
+      if (selected && selected.type === "device" && selected.id === d.id) item.classList.add("selected");
+      stock.appendChild(item);
+    });
+    if (!stock.children.length) stock.appendChild(make("p", "", "Всё оборудование назначено."));
+
+    renderStage(stage, l, all);
+    persist();
+
+    const sig2 = JSON.stringify([layouts, current ? current.id : null, $("ceoName").value]);
+    if (sig2 !== lastBcastSig) {
+      lastBcastSig = sig2;
+      if (!applyingRemote) broadcastState();
+    }
+  }
+
+  function renderStage(stage, l, all) {
+    stage.innerHTML = "";
+    const sw = stage.clientWidth || 740, sh = stage.clientHeight || 640;
+    const SIDE_GAP = 52, HEAD_GAP = 48;
+    const headDockH = 26, headH = 44, headTop = headDockH + 4;
+    const ty = headTop + headH + HEAD_GAP;
+    const th = Math.max(320, sh - ty - 14), tw = th * 10.4 / 29, tx = (sw - tw) / 2;
+    const maxSide = Math.max(l.L, l.R);
+    const NUM_SIZE = Math.min(40, Math.max(28, Math.floor(th / maxSide - 2)));
+    const numFont = Math.round(NUM_SIZE * 0.55);
+    const seatH = Math.max(32, Math.min(48, th / maxSide - 5));
+    const icon = Math.max(18, Math.min(22, Math.floor((seatH - 3) / 2)));
+    const dockW = icon * 3 + 3 * 2 + 4;
+    const chairW = Math.max(110, Math.min(215, (sw - tw) / 2 - SIDE_GAP - 6 - dockW - 8));
+    const hx = sw / 2 - chairW / 2;
+
+    const geom = {};
+    geom["head"] = {x: hx, y: headTop, w: chairW, h: headH, cx: hx + chairW / 2, cy: headTop + headH / 2};
+    ["L", "R"].forEach(side => {
+      const count = l[side];
+      for (let i = 0; i < count; i++) {
+        const cy = ty + (i + 0.5) * th / count, y = cy - seatH / 2;
+        const x = side === "L" ? tx - SIDE_GAP - chairW : tx + tw + SIDE_GAP;
+        geom[side + i] = {x, y, w: chairW, h: seatH, cx: x + chairW / 2, cy};
+      }
+    });
+
+    let ceoId = null;
+    for (const p of all) { if (isCeo(p)) { ceoId = p.id; break; } }
+    let ceoSeatKey = null;
+    if (ceoId) {
+      for (const k in l.seats) { if (l.seats[k] === ceoId) { ceoSeatKey = k; break; } }
+    }
+    if (!ceoSeatKey || !geom[ceoSeatKey]) ceoSeatKey = "head";
+
+    const ceoY = geom[ceoSeatKey].cy, midY = ty + th / 2, fromBottom = ceoY <= midY;
+    const numMap = {};
+    ["L", "R"].forEach(side => {
+      const count = l[side];
+      for (let i = 0; i < count; i++) numMap[side + i] = fromBottom ? (count - i) : (i + 1);
+    });
+    numMap["head"] = fromBottom ? (maxSide + 1) : 1;
+
+    const sideName = key => key === "head" ? "Глава стола" : (key[0] === "L" ? "Слева" : "Справа");
+
+    const table = make("div", "table");
+    table.style.left = tx + "px";
+    table.style.top = ty + "px";
+    table.style.width = tw + "px";
+    table.style.height = th + "px";
+    stage.appendChild(table);
+
+    const monitor = (px, py) => {
+      const m = make("div", "monitor");
+      m.style.left = px + "%";
+      m.style.top = py + "%";
+      table.appendChild(m);
+    };
+    monitor(50, 4);
+    for (let i = 0; i < MONITOR_SLOTS; i++) {
+      const py = 100 * (i + 0.5) / MONITOR_SLOTS;
+      monitor(22, py);
+      monitor(78, py);
+    }
+
+    const findP = id => { for (const p of all) if (p.id === id) return p; return null; };
+
+    const addSeat = (key, x, y, w, h, label) => {
+      const person = findP(l.seats[key]);
+      const seat = make("div", "seat" + (person ? " occupied" : "") + (key === "head" ? " head" : ""));
+      seat.style.left = x + "px";
+      seat.style.top = y + "px";
+      seat.style.width = w + "px";
+      seat.style.height = h + "px";
+      if (person) {
+        const sCeo = isCeo(person), sPh = person.id === "ceo";
+        if (sCeo && sPh) {
+          seat.appendChild(make("span", "name ceo-name", "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР"));
+        } else {
+          const nm = make("span", "name", person.name.toUpperCase());
+          if (sCeo) nm.style.webkitLineClamp = "1";
+          seat.appendChild(nm);
+          if (sCeo) seat.appendChild(make("span", "ceo-tag", "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР"));
+        }
+        seat.title = (person.role ? person.name + " — " + person.role : person.name) + "\n" + sideName(key) + " №" + numMap[key];
+        seat.draggable = true;
+        seat.addEventListener("dragstart", e => beginDrag(e, {type: "person", id: person.id}));
+      } else {
+        if (key === "head") {
+          seat.appendChild(make("span", "name", "СВОБОДНО"));
+          seat.appendChild(make("span", "tag", "глава стола"));
+        } else {
+          seat.appendChild(make("span", "name", label));
+          seat.appendChild(make("span", "tag", "свободно"));
+        }
+        seat.title = sideName(key) + " №" + numMap[key] + " — свободно";
+      }
+      dropTarget(seat, data => place(key, data));
+      seat.tabIndex = 0;
+      seat.addEventListener("click", () => {
+        if (selected) place(key, selected);
+        else if (person) { selected = {type: "person", id: person.id}; render(); toast("Выбран: " + person.name); }
+      });
+      seat.addEventListener("keydown", e => {
+        if ((e.key === "Enter" || e.key === " ") && selected) { e.preventDefault(); place(key, selected); }
+      });
+      stage.appendChild(seat);
+      return person;
+    };
+
+    const addDock = (key, cls, x, y, w, h, size, person) => {
+      const dock = make("div", "dock " + cls);
+      dock.style.left = x + "px";
+      dock.style.top = y + "px";
+      dock.style.width = w + "px";
+      dock.style.height = h + "px";
+      dock.style.setProperty("--s", size + "px");
+      devices.forEach(d => { if (l.equipment[d.id] === person.id) dock.appendChild(deviceBadge(d)); });
+      dropTarget(dock, data => place(key, data));
+      stage.appendChild(dock);
+    };
+
+    const addNum = key => {
+      const g = geom[key];
+      const isCeoSeat = Boolean(ceoId && l.seats[key] === ceoId);
+      const val = numMap[key];
+      const size = key === "head" ? 40 : NUM_SIZE;
+      const nb = make("div", "seat-num" + (isCeoSeat ? " ceo" : ""), String(val));
+      nb.title = sideName(key) + " №" + val + (isCeoSeat ? " (генеральный директор)" : "");
+      let nx, ny;
+      if (key === "head") { nx = sw / 2; ny = (headTop + headH + ty) / 2; }
+      else if (key[0] === "L") { nx = tx - SIDE_GAP / 2; ny = g.cy; }
+      else { nx = tx + tw + SIDE_GAP / 2; ny = g.cy; }
+      nb.style.left = (nx - size / 2) + "px";
+      nb.style.top = (ny - size / 2) + "px";
+      nb.style.width = nb.style.height = size + "px";
+      nb.style.fontSize = (val >= 10 ? Math.round(size * 0.45) : (key === "head" ? 22 : numFont)) + "px";
+      stage.appendChild(nb);
+    };
+
+    const boss = addSeat("head", hx, headTop, chairW, headH, "СВОБОДНО");
+    addNum("head");
+    if (boss) addDock("head", "H", hx, 1, chairW, headDockH, 22, boss);
+
+    ["L", "R"].forEach(side => {
+      const count = l[side];
+      for (let i = 0; i < count; i++) {
+        const key = side + i, g = geom[key];
+        const p = addSeat(key, g.x, g.y, chairW, seatH, sideName(key) + " №" + numMap[key]);
+        addNum(key);
+        if (p) {
+          if (side === "L") addDock(key, "L", g.x - 6 - dockW, g.y, dockW, seatH, icon, p);
+          else addDock(key, "R", g.x + chairW + 6, g.y, dockW, seatH, icon, p);
+        }
+      }
+    });
+  }
+
+  function beginDrag(e, data) {
+    drag = data;
+    try {
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", JSON.stringify(data));
+    } catch (_) {}
+    document.body.classList.toggle("drag-device", data.type === "device");
+    if (data.type === "device") {
+      document.querySelectorAll(".seat.occupied").forEach(s => { s.draggable = false; });
+      document.querySelectorAll("#people .item").forEach(s => { s.draggable = false; });
+    }
+  }
+
+  function endDrag() {
+    drag = null;
+    document.body.classList.remove("drag-device");
+    document.querySelectorAll(".drag-over").forEach(el => el.classList.remove("drag-over"));
+    document.querySelectorAll(".seat.occupied").forEach(s => { s.draggable = true; });
+    document.querySelectorAll("#people .item").forEach(s => { s.draggable = true; });
+    if (pendingRender) { pendingRender = false; render(); }
+  }
+  document.addEventListener("dragend", endDrag);
+
+  function getDrag(e) {
+    if (drag) return drag;
+    try { return JSON.parse(e.dataTransfer.getData("text/plain")); } catch (_) { return null; }
+  }
+
+  function place(seatKey, data) {
+    const l = layout();
+    if (!l || !data) return endDrag();
+    if (data.type === "person") {
+      const ok = members(current).some(p => p.id === data.id);
+      if (!ok) return endDrag();
+      let from = null;
+      for (const k in l.seats) if (l.seats[k] === data.id) from = k;
+      if (from !== seatKey) {
+        if (from) delete l.seats[from];
+        l.seats[seatKey] = data.id;
+      }
+    } else if (data.type === "device") {
+      const okD = devices.some(d => d.id === data.id);
+      if (!okD || !l.seats[seatKey]) {
+        status("Сначала посадите участника на стул или перетащите оборудование на ФИО в списке.", "warn");
+        return endDrag();
+      }
+      l.equipment[data.id] = l.seats[seatKey];
+      toast("Оборудование назначено");
+    }
+    selected = null;
+    pendingRender = false;
+    drag = null;
+    document.body.classList.remove("drag-device");
+    render();
+  }
+
+  function assignDeviceToPerson(pid, did) {
+    const l = layout();
+    if (!l) return endDrag();
+    if (!devices.some(d => d.id === did)) return endDrag();
+    if (!members(current).some(p => p.id === pid)) return endDrag();
+    l.equipment[did] = pid;
+    toast("Оборудование назначено");
+    selected = null;
+    pendingRender = false;
+    drag = null;
+    document.body.classList.remove("drag-device");
+    render();
+  }
+
+  function returnDrop(data) {
+    const l = layout();
+    if (l && data) {
+      if (data.type === "person") {
+        for (const s of Object.keys(l.seats)) if (l.seats[s] === data.id) delete l.seats[s];
+      }
+      if (data.type === "device") delete l.equipment[data.id];
+    }
+    selected = null;
+    pendingRender = false;
+    drag = null;
+    document.body.classList.remove("drag-device");
+    render();
+  }
+
+  ["returnZone", "equipment", "people"].forEach(id => dropTarget($(id), returnDrop));
+
+  $("returnZone").addEventListener("click", () => {
+    if (selected && selected.type === "person") {
+      const l = layout();
+      if (l) for (const s of Object.keys(l.seats)) if (l.seats[s] === selected.id) delete l.seats[s];
+      selected = null;
+      render();
+      toast("Место освобождено");
+    }
+  });
+
+  $("equipment").addEventListener("click", e => {
+    if (e.target && e.target.id === "equipment" && selected && selected.type === "device") {
+      const l = layout();
+      if (l && l.equipment[selected.id]) {
+        delete l.equipment[selected.id];
+        selected = null;
+        render();
+        toast("Оборудование снято");
+      }
+    }
+  });
+
+  document.querySelectorAll("[data-side]").forEach(btn => {
+    btn.onclick = () => {
+      const l = layout();
+      if (!l) return;
+      const side = btn.getAttribute("data-side");
+      l[side] = clamp(l[side] + Number(btn.getAttribute("data-change")));
+      render();
+    };
+  });
+
+  $("resetBtn").onclick = () => {
+    const l = layout();
+    if (!l || !current) return;
+    if (!confirm("Сбросить рассадку текущего совещания?\n\n• Все участники вернутся в список\n• Оборудование вернётся на панель\n• Генеральный директор — во главу стола\n• Стулья — по 5 с каждой стороны")) return;
+    l.L = 5;
+    l.R = 5;
+    l.seats = {};
+    l.equipment = {};
+    l.ceoAuto = false;
+    selected = null;
+    render();
+    toast("Рассадка сброшена");
+  };
+
+  function applyMeetings(list) {
+    const sig = JSON.stringify(list.map(m => [m.id, m.title, m.date, m.time, m.people.map(p => p.id + "|" + p.role)]));
+    const prevId = current ? current.id : null, changed = sig !== signature;
+    signature = sig;
+    meetings = list;
+    if (pendingRemoteMeeting) {
+      const m = meetings.filter(x => x.id === pendingRemoteMeeting)[0];
+      if (m) { current = m; pendingRemoteMeeting = null; }
+    }
+    const still = meetings.some(m => current && m.id === current.id);
+    if (!still) current = meetings.filter(m => m.id === prevId)[0] || meetings[0] || null;
+    if (changed || ((current ? current.id : null) !== prevId)) {
+      if (drag) pendingRender = true; else render();
+    }
+  }
+
+  function refresh(manual) {
+    if (loading || (localCsv && !manual)) return;
+    loading = true;
+    if (manual) status("Загрузка таблицы…");
+    readSheet().then(data => {
+      applyMeetings(extract(data, safeIdentity()));
+      const t = new Date().toLocaleTimeString("ru-RU");
+      if (data.exact) status("Совещаний: " + meetings.length + " · обновлено " + t);
+      else status("Совещаний: " + meetings.length + " · обновлено " + t + " (CSV)", data.apiError ? "warn" : "good");
+      loading = false;
+    }).catch(e => {
+      status("Ошибка загрузки: " + e.message, "bad");
+      loading = false;
+    });
+  }
+
+  $("refreshBtn").onclick = () => { localCsv = false; persist(); refresh(true); };
+  $("csvBtn").onclick = () => $("csvFile").click();
+  $("csvFile").onchange = e => {
+    const file = e.target.files ? e.target.files[0] : null;
+    if (!file) return;
+    file.text().then(txt => {
+      const list = extract({rows: csvParse(txt), merges: [], exact: false}, safeIdentity());
+      localCsv = true;
+      applyMeetings(list);
+      status("Импортировано из CSV: " + meetings.length + ". Для автообновления нажмите «Обновить».");
+    }).catch(err => status("Ошибка CSV: " + err.message, "bad"));
+    e.target.value = "";
+  };
+  $("apiKey").onchange = () => { persist(); refresh(true); };
+  $("sheetUrl").onchange = () => { persist(); refresh(true); };
+  $("ceoName").onchange = () => { persist(); render(); };
+
+  let rz = 0;
+  window.addEventListener("resize", () => {
+    cancelAnimationFrame(rz);
+    rz = requestAnimationFrame(() => { if (current && !drag) render(); });
+  });
+
+  /* --- Синхронизация ПК <-> iPhone (PeerJS) --- */
+  function deviceNameVal() { return clean($("deviceName").value) || "Устройство"; }
+  function currentStateMsg() {
+    return {
+      type: "state",
+      from: senderId,
+      fromName: deviceNameVal(),
+      ts: Date.now(),
+      code: syncCode,
+      layouts,
+      currentId: current ? current.id : null,
+      ceo: $("ceoName").value
+    };
+  }
+  function broadcastState() {
+    if (!syncEnabled) return;
+    clearTimeout(bcastTimer);
+    bcastTimer = setTimeout(sendStateToAll, 300);
+  }
+  function sendStateToAll() {
+    if (!syncEnabled || !conns.length) return;
+    const open = conns.filter(c => { try { return c.open; } catch (_) { return false; } });
+    if (!open.length) return;
+    const msg = currentStateMsg();
+    lastSyncTs = msg.ts;
+    open.forEach(c => { try { c.send(msg); } catch (_) {} });
+  }
+  function sendStateToConn(conn) {
+    if (!syncEnabled) return;
+    const msg = currentStateMsg();
+    lastSyncTs = msg.ts;
+    try {
+      if (conn.open) conn.send(msg);
+      else conn.on("open", () => { try { conn.send(currentStateMsg()); } catch (_) {} });
+    } catch (_) {}
+  }
+  function onSyncData(msg, fromConn) {
+    if (!msg || msg.type !== "state" || msg.from === senderId) return;
+    lastSyncTs = msg.ts || Date.now();
+    applyingRemote = true;
+    try {
+      if (msg.layouts && typeof msg.layouts === "object") layouts = msg.layouts;
+      if (typeof msg.ceo === "string") $("ceoName").value = msg.ceo;
+      if (msg.currentId) {
+        const m = meetings.filter(x => x.id === msg.currentId)[0];
+        if (m) current = m; else pendingRemoteMeeting = msg.currentId;
+      }
+      selected = null;
+      render();
+      toast("↔ Изменения с «" + (msg.fromName || "другого устройства") + "»");
+    } finally {
+      applyingRemote = false;
+    }
+    if (peerMode === "host" && fromConn) {
+      conns.forEach(c => { if (c !== fromConn) { try { if (c.open) c.send(msg); } catch (_) {} } });
+    }
+  }
+  function updateSyncCount() {
+    const n = conns.filter(c => { try { return c.open; } catch (_) { return false; } }).length;
+    if (peerMode === "host") setSyncStatus("Код " + syncCode + " · подкл.: " + n, "ok");
+    else if (n > 0) setSyncStatus("Подключено (" + syncCode + ")", "ok");
+  }
+  function loadPeerJS() {
+    return new Promise((res, rej) => {
+      if (window.Peer) return res();
+      const s = document.createElement("script");
+      s.src = "https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js";
+      s.onload = () => { if (window.Peer) res(); else rej(new Error("PeerJS не загрузился")); };
+      s.onerror = () => rej(new Error("не удалось загрузить PeerJS (нужен интернет)"));
+      document.head.appendChild(s);
+    });
+  }
+  function peerIdFor(code) { return "rassadka2026-" + String(code).trim(); }
+  function showQR(code) {
+    $("qrWrap").hidden = false;
+    $("qrCodeBig").textContent = code;
+    $("qrImg").src = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" + encodeURIComponent("РАССАДКА:" + code);
+  }
+  function hideQR() { $("qrWrap").hidden = true; }
+  function addConn(conn) {
+    conns.push(conn);
+    conn.on("open", () => { updateSyncCount(); if (peerMode === "host") sendStateToConn(conn); });
+    conn.on("data", msg => onSyncData(msg, conn));
+    const rm = () => { conns = conns.filter(c => c !== conn); if (syncEnabled) updateSyncCount(); };
+    conn.on("close", rm);
+    conn.on("error", () => {});
+  }
+  function stopSync(silent) {
+    try { conns.forEach(c => { try { c.close(); } catch (_) {} }); } catch (_) {}
+    conns = [];
+    try { if (peer) peer.destroy(); } catch (_) {}
+    peer = null;
+    peerMode = "";
+    syncEnabled = false;
+    hideQR();
+    if (!silent) {
+      setSyncStatus("Синхр. выкл.");
+      $("syncOffBtn").disabled = true;
+      $("syncBtn").disabled = false;
+    }
+  }
+  function startSync(code) {
+    code = String(code || "").trim();
+    if (!code) { setSyncStatus("Введите код", "err"); return; }
+    setSyncStatus("Подключение…");
+    $("syncBtn").disabled = true;
+    loadPeerJS().then(() => {
+      stopSync(true);
+      syncCode = code;
+      lastSyncTs = Date.now();
+      const hostId = peerIdFor(code);
+      let isHost = true;
+      const p = new Peer(hostId);
+      peer = p;
+      p.on("open", () => {
+        if (!isHost) return;
+        peerMode = "host";
+        syncEnabled = true;
+        setSyncStatus("Код " + code + ": ожидание…", "ok");
+        $("syncOffBtn").disabled = false;
+        $("syncBtn").disabled = false;
+        showQR(code);
+        toast("Синхронизация: код " + code);
+      });
+      p.on("connection", conn => addConn(conn));
+      p.on("error", err => {
+        if (err && err.type === "unavailable-id" && isHost) {
+          isHost = false;
+          try { p.destroy(); } catch (_) {}
+          const cp = new Peer();
+          peer = cp;
+          cp.on("open", () => {
+            peerMode = "client";
+            syncEnabled = true;
+            const conn = cp.connect(hostId, {reliable: true});
+            addConn(conn);
+            setSyncStatus("Подключено (" + code + ")", "ok");
+            $("syncOffBtn").disabled = false;
+            $("syncBtn").disabled = false;
+            hideQR();
+          });
+          cp.on("error", e2 => {
+            setSyncStatus("Ошибка: " + ((e2 && e2.message) || (e2 && e2.type) || "сеть"), "err");
+            $("syncBtn").disabled = false;
+          });
+        } else if (err && (err.type === "peer-unavailable" || err.type === "network" || err.type === "server-error" || err.type === "socket-error")) {
+          setSyncStatus("Нет связи с сервером синхронизации", "err");
+          $("syncBtn").disabled = false;
+        }
+      });
+      p.on("disconnected", () => { try { p.reconnect(); } catch (_) {} });
+    }).catch(e => {
+      setSyncStatus("Ошибка: " + e.message, "err");
+      $("syncBtn").disabled = false;
+    });
+  }
+  $("syncBtn").onclick = () => { persist(); startSync($("syncCode").value); };
+  $("syncNewBtn").onclick = () => {
+    const c = String(Math.floor(100000 + Math.random() * 900000));
+    $("syncCode").value = c;
+    persist();
+    startSync(c);
+  };
+  $("syncOffBtn").onclick = () => stopSync(false);
+  $("deviceName").onchange = persist;
+  $("syncCode").onchange = persist;
+  window.addEventListener("beforeunload", () => { try { if (peer) peer.destroy(); } catch (_) {} });
+
+  /* --- Печать A4 / Сохранение JPEG (крупная нумерация мест + ФИО капсом и крупнее) --- */
+  function rr(c, x, y, w, h, r) {
+    c.beginPath();
+    if (c.roundRect) c.roundRect(x, y, w, h, r); else c.rect(x, y, w, h);
+  }
+
+  function image() {
+    if (!current) throw Error("Сначала выберите совещание.");
+    const l = layout(), people = members(current), W = 1400, H = 1980;
+    const FONT = "system-ui, 'Segoe UI', Arial, sans-serif";
+    const canvas = document.createElement("canvas");
+    canvas.width = W;
+    canvas.height = H;
+    const c = canvas.getContext("2d");
+
+    const truncate = (text, maxW) => {
+      if (c.measureText(text).width <= maxW) return text;
+      while (text.length > 1 && c.measureText(text + "…").width > maxW) text = text.slice(0, -1);
+      return text + "…";
+    };
+    const wrap = (text, maxW, maxLines) => {
+      const lines = [""];
+      text.split(" ").forEach(word => {
+        const i = lines.length - 1, attempt = lines[i] ? lines[i] + " " + word : word;
+        if (c.measureText(attempt).width <= maxW || !lines[i]) lines[i] = attempt;
+        else if (lines.length < maxLines) lines.push(word);
+        else lines[i] = truncate(lines[i] + " " + word, maxW);
+      });
+      return lines.map(s => truncate(s, maxW));
+    };
+
+    c.fillStyle = "#fff";
+    c.fillRect(0, 0, W, H);
+    c.fillStyle = "#183c34";
+    c.font = "bold 44px " + FONT;
+    c.fillText("СХЕМА РАССАДКИ", 70, 74);
+    c.font = "27px " + FONT;
+    c.fillText(truncate(current.title, W - 140), 70, 114);
+    c.fillStyle = "#58675c";
+    c.font = "22px " + FONT;
+    c.fillText([current.date, current.time].filter(Boolean).join(" · "), 70, 146);
+
+    // Стол венге
+    const x = 545, y = 360, w = 310, h = 1390;
+    const wood = c.createLinearGradient(x, 0, x + w, 0);
+    wood.addColorStop(0, "#38271e");
+    wood.addColorStop(0.25, "#674529");
+    wood.addColorStop(0.5, "#452e20");
+    wood.addColorStop(0.77, "#64442b");
+    wood.addColorStop(1, "#35261d");
+    c.fillStyle = wood;
+    c.fillRect(x, y, w, h);
+    c.strokeStyle = "#977455aa";
+    c.lineWidth = 2;
+    for (let j = 0; j < 11; j++) {
+      const xx = x + 17 + j * 27;
+      c.beginPath();
+      c.moveTo(xx, y + 10);
+      c.bezierCurveTo(xx + 14, y + h * 0.35, xx - 12, y + h * 0.7, xx + 4, y + h - 10);
+      c.stroke();
+    }
+    c.strokeStyle = "#251b17";
+    c.lineWidth = 13;
+    c.strokeRect(x, y, w, h);
+
+    // Фиксированные мониторы (5 слева + 5 справа + 1 у главы)
+    const monitor = (px, py) => {
+      c.fillStyle = "#b8c5c4"; c.fillRect(px - 20, py - 14, 40, 28);
+      c.fillStyle = "#263e43"; c.fillRect(px - 17, py - 11, 34, 21);
+      c.fillStyle = "#a3b0ae"; c.fillRect(px - 2, py + 14, 4, 7);
+    };
+    monitor(700, y + 50);
+    for (let i = 0; i < MONITOR_SLOTS; i++) {
+      const my = y + (i + 0.5) * h / MONITOR_SLOTS;
+      monitor(x + 70, my);
+      monitor(x + w - 70, my);
+    }
+
+    // Значки оборудования с внешней от стола стороны
+    const badge = (d, bx, by, s) => {
+      c.fillStyle = "#fffdf7";
+      c.strokeStyle = "#c3a873";
+      c.lineWidth = 2;
+      rr(c, bx, by, s, s, 7);
+      c.fill();
+      c.stroke();
+      c.textAlign = "center";
+      c.textBaseline = "middle";
+      c.fillStyle = "#2b2b2b";
+      c.font = Math.round(s * 0.58) + "px " + FONT;
+      c.fillText(d.icon, bx + s / 2, by + s / 2 + 1);
+      if (d.n) {
+        c.font = "bold 12px " + FONT;
+        c.fillStyle = "#6b5a35";
+        c.fillText(d.n, bx + s - 6, by + s - 6);
+      }
+      c.textAlign = "left";
+      c.textBaseline = "alphabetic";
+    };
+    const dock = (pid, side, ax, ay) => {
+      const list = devices.filter(d => l.equipment[d.id] === pid);
+      if (!list.length) return;
+      const s = 32, g = 4;
+      if (side === "H") {
+        const total = list.length * s + (list.length - 1) * g;
+        list.forEach((d, i) => badge(d, ax - total / 2 + i * (s + g), ay - s, s));
+        return;
+      }
+      const rows = Math.ceil(list.length / 3), top = ay - (rows * s + (rows - 1) * g) / 2;
+      list.forEach((d, i) => {
+        const row = Math.floor(i / 3), colI = i % 3;
+        const inRow = Math.min(3, list.length - row * 3);
+        const rowW = inRow * s + (inRow - 1) * g;
+        const startX = side === "L" ? ax - rowW : ax;
+        badge(d, startX + colI * (s + g), top + row * (s + g), s);
+      });
+    };
+
+    const chair = (key, cx, cy, cw, ch, cap) => {
+      let p = null;
+      people.forEach(pp => { if (pp.id === l.seats[key]) p = pp; });
+      c.fillStyle = p ? "#e4f1e7" : "#e3e6e4";
+      c.strokeStyle = key === "head" ? "#b99a62" : (p ? "#759781" : "#a7aeaa");
+      c.lineWidth = 3;
+      rr(c, cx, cy, cw, ch, 13);
+      c.fill();
+      c.stroke();
+      if (p) {
+        const pCeo = isCeo(p), pPh = p.id === "ceo";
+        if (pCeo && pPh) {
+          c.font = "bold 24px " + FONT;
+          c.fillStyle = "#c81e1e";
+          const lines = wrap("ГЕНЕРАЛЬНЫЙ ДИРЕКТОР", cw - 24, 2), lh = 28;
+          lines.forEach((line, i) => c.fillText(line, cx + 12, cy + ch / 2 - lines.length * lh / 2 + lh * (i + 1) - 6));
+        } else if (pCeo) {
+          c.font = "bold 24px " + FONT;
+          c.fillStyle = "#24352a";
+          const lines = wrap(p.name.toUpperCase(), cw - 24, 1), lh = 28;
+          lines.forEach((line, i) => c.fillText(line, cx + 12, cy + ch / 2 - 22 + lh * (i + 1) - 6));
+          c.font = "bold 15px " + FONT;
+          c.fillStyle = "#c81e1e";
+          c.fillText("ГЕНЕРАЛЬНЫЙ ДИРЕКТОР", cx + 12, cy + ch / 2 + 22);
+        } else {
+          c.font = "bold 24px " + FONT;
+          c.fillStyle = "#24352a";
+          const lines = wrap(p.name.toUpperCase(), cw - 24, 2), lh = 28;
+          lines.forEach((line, i) => c.fillText(line, cx + 12, cy + ch / 2 - lines.length * lh / 2 + lh * (i + 1) - 6));
+        }
+      } else {
+        c.font = "20px " + FONT;
+        c.fillStyle = "#7a8780";
+        c.fillText(cap, cx + 12, cy + ch / 2 + 7);
+      }
+      return p;
+    };
+
+    // Расчёт параллельной нумерации мест (увеличенный в 2 раза диаметр 56px)
+    const cyOfImg = key => {
+      if (key === "head") return 243;
+      const m = /^([LR])(\d+)$/.exec(key || "");
+      if (!m) return 243;
+      const cnt = l[m[1]];
+      return y + (Number(m[2]) + 0.5) * h / cnt;
+    };
+    let ceoIdImg = null;
+    for (const pp of people) { if (isCeo(pp)) { ceoIdImg = pp.id; break; } }
+    let ceoSeatImg = null;
+    if (ceoIdImg) {
+      for (const k in l.seats) { if (l.seats[k] === ceoIdImg) { ceoSeatImg = k; break; } }
+    }
+    if (!ceoSeatImg) ceoSeatImg = "head";
+    const fromBottomImg = cyOfImg(ceoSeatImg) <= y + h / 2;
+    const numImg = {};
+    ["L", "R"].forEach(side => {
+      const count = l[side];
+      for (let i = 0; i < count; i++) numImg[side + i] = fromBottomImg ? (count - i) : (i + 1);
+    });
+    numImg["head"] = fromBottomImg ? (Math.max(l.L, l.R) + 1) : 1;
+
+    const drawNum = (nx, ny, num, isCeoSeat) => {
+      const rad = 28; // диаметр 56px (в 2 раза крупнее стандартного)
+      c.save();
+      c.beginPath();
+      c.arc(nx, ny, rad, 0, Math.PI * 2);
+      c.fillStyle = isCeoSeat ? "#a07c2e" : "#183c34";
+      c.fill();
+      c.lineWidth = 3;
+      c.strokeStyle = "#ffffff";
+      c.stroke();
+      c.fillStyle = "#ffffff";
+      c.font = "bold " + (num >= 10 ? "30" : "36") + "px " + FONT;
+      c.textAlign = "center";
+      c.textBaseline = "middle";
+      c.fillText(String(num), nx, ny + 2);
+      c.restore();
+      c.textAlign = "left";
+      c.textBaseline = "alphabetic";
+    };
+
+    // Глава стола и номер между ним и столом
+    const hp = chair("head", 555, 202, 290, 82, "СВОБОДНО");
+    drawNum(700, 322, numImg["head"], Boolean(ceoIdImg && l.seats["head"] === ceoIdImg));
+    if (hp) dock(hp.id, "H", 700, 194);
+
+    // Боковые ряды кресел и номера между креслами и краем стола
+    ["L", "R"].forEach(side => {
+      const count = l[side], left = side === "L", ch = Math.min(76, h / count - 12);
+      for (let i = 0; i < count; i++) {
+        const cy = y + (i + 0.5) * h / count;
+        const cx = left ? 140 : 931, cw = 329;
+        const key = side + i;
+        const p = chair(key, cx, cy - ch / 2, cw, ch, "Свободно");
+        const nx = left ? (cx + cw + x) / 2 : (x + w + cx) / 2;
+        drawNum(nx, cy, numImg[key], Boolean(ceoIdImg && l.seats[key] === ceoIdImg));
+        if (p) dock(p.id, side, left ? 132 : 1268, cy);
+      }
+    });
+
+    c.fillStyle = "#607168";
+    c.font = "19px " + FONT;
+    c.fillText("Стульев слева: " + l.L + " · справа: " + l.R + " · участников: " + people.length, 70, 1835);
+    c.fillText("Оборудование: мышь · клавиатура · телефонная трубка", 70, 1870);
+    c.fillText("Сформировано: " + new Date().toLocaleString("ru-RU"), 70, 1905);
+    return canvas.toDataURL("image/jpeg", 0.94);
+  }
+
+  $("saveBtn").onclick = () => {
+    try {
+      const a = document.createElement("a");
+      a.href = image();
+      a.download = "схема-рассадки.jpg";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e) { status(e.message, "bad"); }
+  };
+
+  $("printBtn").onclick = () => {
+    try {
+      const img = new Image();
+      img.onload = () => window.print();
+      img.src = image();
+      $("printArea").innerHTML = "";
+      $("printArea").appendChild(img);
+    } catch (e) { status(e.message, "bad"); }
+  };
+
+  try {
+    const man = {
+      name: "Схема рассадки",
+      short_name: "Рассадка",
+      display: "standalone",
+      start_url: ".",
+      background_color: "#eef1ee",
+      theme_color: "#183c34"
+    };
+    const blob = new Blob([JSON.stringify(man)], {type: "application/json"});
+    const lk = document.createElement("link");
+    lk.rel = "manifest";
+    lk.href = URL.createObjectURL(blob);
+    document.head.appendChild(lk);
+  } catch (_) {}
+
+  render();
+  refresh(true);
+  setInterval(refresh, REFRESH_MS);
+})();
+</script>
+</body>
+</html>
