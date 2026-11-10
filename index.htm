@@ -2,245 +2,580 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Схема рассадки — совещания</title>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Рассадка">
 <meta name="theme-color" content="#183c34">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23183c34'/%3E%3Crect x='36' y='14' width='28' height='72' rx='4' fill='%2368442b'/%3E%3Ccircle cx='22' cy='28' r='7' fill='%23e5e7e6'/%3E%3Ccircle cx='22' cy='50' r='7' fill='%23e5e7e6'/%3E%3Ccircle cx='22' cy='72' r='7' fill='%23e5e7e6'/%3E%3Ccircle cx='78' cy='28' r='7' fill='%23e5e7e6'/%3E%3Ccircle cx='78' cy='50' r='7' fill='%23e5e7e6'/%3E%3Ccircle cx='78' cy='72' r='7' fill='%23e5e7e6'/%3E%3C/svg%3E">
+<script>
+// Генерация PNG-иконки для экрана «Домой» на iPhone (iOS требует PNG вместо SVG)
+(function() {
+  try {
+    var cv = document.createElement("canvas");
+    cv.width = cv.height = 180;
+    var g = cv.getContext("2d");
+    g.fillStyle = "#183c34";
+    g.fillRect(0, 0, 180, 180);
+    g.fillStyle = "#5c3b24";
+    g.strokeStyle = "#d7b478";
+    g.lineWidth = 4;
+    g.beginPath();
+    if (g.roundRect) g.roundRect(64, 28, 52, 128, 10); else g.rect(64, 28, 52, 128);
+    g.fill(); g.stroke();
+    g.fillStyle = "#e5e7e6";
+    [48, 92, 136].forEach(function(y) {
+      g.beginPath(); g.arc(42, y, 11, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.arc(138, y, 11, 0, Math.PI * 2); g.fill();
+    });
+    g.fillStyle = "#d7b478";
+    g.beginPath(); g.arc(90, 16, 9, 0, Math.PI * 2); g.fill();
+    var link = document.createElement("link");
+    link.rel = "apple-touch-icon";
+    link.href = cv.toDataURL("image/png");
+    document.head.appendChild(link);
+  } catch (_) {}
+  if (navigator.standalone || /iPhone|iPad|iPod/i.test(navigator.userAgent || "")) {
+    document.documentElement.classList.add("is-webapp");
+  }
+})();
+</script>
 <style>
-:root { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #25302b; background: #eef1ee; }
-* { box-sizing: border-box; }
-body { margin: 0; }
+:root {
+  --bg: #eef2ef;
+  --card: #ffffff;
+  --brand: #183c34;
+  --brand-light: #e7f1eb;
+  --gold: #d7b478;
+  --gold-dark: #9e7832;
+  --danger: #c81e1e;
+  --text: #223029;
+  --muted: #64756b;
+  --border: #dae4dc;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; overscroll-behavior-y: none; }
 button, input { font: inherit; }
-button { cursor: pointer; }
-.seat, .item, .dev, .meeting, button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; user-select: none; -webkit-user-select: none; }
+.seat, .item, .dev, .meeting, .chip { touch-action: manipulation; user-select: none; -webkit-user-select: none; }
 
-header { padding: 12px 20px; color: #fff; background: #183c34; display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap; }
-header h1 { margin: 0; font-size: 20px; }
-header small { color: #c8dfd3; }
-.actions { display: flex; gap: 8px; flex-wrap: wrap; }
-button.primary, button.secondary { border: 0; border-radius: 9px; padding: 8px 13px; font-weight: 650; }
-button.primary { background: #d7b478; color: #25251d; }
-button.secondary { background: #e8f1eb; color: #183c34; }
-button:disabled { opacity: .45; cursor: not-allowed; }
+/* Верхняя шапка */
+header {
+  padding: calc(10px + env(safe-area-inset-top, 0px)) 18px 10px;
+  color: #fff;
+  background: var(--brand);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  box-shadow: 0 2px 12px #0f262026;
+  position: relative;
+  z-index: 20;
+}
+.brand-block { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand-title h1 { margin: 0; font-size: 19px; letter-spacing: -0.2px; }
+.status-line { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: #c4ddd1; margin-top: 2px; flex-wrap: wrap; }
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: #4cd97b; flex: 0 0 auto; }
+.live-dot.warn { background: #f2b84b; }
+.live-dot.bad { background: #ff6b6b; }
+.sync-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 1px 7px; border-radius: 99px; font-size: 10.5px; font-weight: 700;
+  background: #ffffff1a; color: #d8ece2; border: 1px solid #ffffff24;
+  transition: background .2s, color .2s, transform .2s;
+}
+.sync-pill.online { background: #27674980; color: #9bf6be; border-color: #4cd97b55; }
+.sync-pill.pulse { transform: scale(1.06); background: #d7b47855; color: #fff; }
 
-.tech { background: #fff; border-bottom: 1px solid #dde5df; padding: 6px 14px; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
-.tech-col { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; min-width: 0; }
-.tech-sep { width: 1px; height: 26px; background: #e4e9e1; }
-.tech label { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: #3d5c4b; }
-.tech input { border: 1px solid #cbd7cd; border-radius: 6px; padding: 4px 6px; font-size: 12px; font-weight: 400; color: #26372c; }
-.tech input#deviceName { width: 96px; }
-.tech input#syncCode { width: 82px; letter-spacing: 2px; font-weight: 800; font-size: 13px; padding: 3px 6px; }
-.tech button { padding: 4px 9px; font-size: 12px; border-radius: 7px; }
-details.conn { position: relative; font-size: 11px; }
-details.conn summary { list-style: none; cursor: pointer; padding: 4px 7px; border-radius: 6px; background: #f1f5f1; color: #3d5c4b; font-weight: 700; user-select: none; }
-details.conn summary::-webkit-details-marker { display: none; }
-details.conn .conn-pop { position: absolute; left: 0; top: calc(100% + 6px); z-index: 50; background: #fff; border: 1px solid #cbd7cd; border-radius: 10px; padding: 10px; box-shadow: 0 8px 24px #0002; width: min(420px, 90vw); display: grid; gap: 8px; }
-details.conn .conn-pop label { display: grid; gap: 3px; }
-details.conn .conn-pop input { width: 100%; }
-.tech .hint { font-size: 11px; color: #62746a; margin: 0; }
-#status, #syncStatus { font-size: 11px; line-height: 1.3; }
-#status.bad { color: #a52929; }
-#status.warn { color: #9a6a12; }
-#status.good { color: #286a41; }
-#syncStatus { color: #6b6250; }
-#syncStatus.ok { color: #286a41; font-weight: 700; }
-#syncStatus.err { color: #a52929; }
-#qrWrap { display: inline-flex; gap: 6px; align-items: center; }
-#qrWrap[hidden] { display: none; }
-#qrWrap img { width: 42px; height: 42px; border: 1px solid #d8cfae; border-radius: 6px; background: #fff; }
-#qrCodeBig { font-size: 15px; font-weight: 800; letter-spacing: 2px; }
+/* Кнопка выбора совещания на мобильном */
+#mobileMeetingBtn {
+  display: none;
+  flex: 1 1 auto;
+  min-width: 0;
+  background: #ffffff17;
+  border: 1px solid #ffffff29;
+  color: #fff;
+  border-radius: 11px;
+  padding: 7px 11px;
+  text-align: left;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+#mobileMeetingBtn .mm-text { min-width: 0; flex: 1; }
+#mobileMeetingBtn .mm-title {
+  font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;
+}
+#mobileMeetingBtn .mm-sub {
+  font-size: 11px; color: #c8e0d4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 5px; margin-top: 1px;
+}
+#mobileSyncDot { font-size: 11px; opacity: 0.45; transition: opacity .2s, transform .2s; }
+#mobileSyncDot.online { opacity: 1; color: #7ef2a6; }
+#mobileSyncDot.pulse { transform: scale(1.3); color: var(--gold); }
+#mobileMeetingBtn .mm-arrow { font-size: 13px; color: var(--gold); flex: 0 0 auto; font-weight: 800; }
 
-main { display: grid; grid-template-columns: minmax(195px, 245px) minmax(0, 1fr) minmax(210px, 260px); gap: 12px; padding: 12px; max-width: 1800px; margin: auto; }
-.panel, .workspace { background: #fff; border: 1px solid #dce6dd; border-radius: 14px; box-shadow: 0 4px 18px #253b3010; }
-.panel { padding: 14px; min-height: 540px; }
-.panel h2, .workspace h2 { margin: 0 0 10px; font-size: 16px; }
-.panel p, .muted { font-size: 12px; color: #66756c; }
+.actions { display: flex; align-items: center; gap: 7px; flex: 0 0 auto; }
+button.primary, button.secondary, button.icon-btn {
+  border: 0; border-radius: 10px; padding: 8px 13px; font-weight: 650; font-size: 13.5px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+}
+button.primary { background: var(--gold); color: #232119; }
+button.secondary { background: var(--brand-light); color: var(--brand); }
+button.icon-btn { background: #ffffff1a; color: #fff; padding: 8px 10px; font-size: 15px; border: 1px solid #ffffff24; }
+button:disabled { opacity: .42; cursor: not-allowed; }
+
+/* В веб-приложении и на мобильных скрываем кнопку Печать */
+html.is-webapp #printBtn { display: none !important; }
+@media (display-mode: standalone) { #printBtn { display: none !important; } }
+
+/* Основная сетка для ПК */
+main {
+  display: grid;
+  grid-template-columns: minmax(210px, 260px) minmax(0, 1fr) minmax(225px, 275px);
+  gap: 12px;
+  padding: 12px;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+.panel, .workspace {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  box-shadow: 0 4px 18px #1d352a0d;
+}
+.panel { padding: 14px; display: flex; flex-direction: column; max-height: calc(100vh - 88px); overflow-y: auto; }
+.panel h2, .workspace h2 { margin: 0 0 9px; font-size: 15.5px; }
+.panel p, .muted { font-size: 12px; color: var(--muted); margin: 0 0 8px; line-height: 1.35; }
 #meetings, #people, #equipment { display: grid; align-content: start; gap: 7px; }
-.meeting { width: 100%; text-align: left; border: 1px solid #e0e7df; border-radius: 9px; background: #f8faf7; padding: 9px; color: #263a30; overflow-wrap: anywhere; }
-.meeting .mt { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.meeting.active { background: #e8f3e8; border-color: #73a381; }
-.meeting small { display: block; color: #66756c; margin-top: 3px; }
 
-.workspace { padding: 13px 12px; min-width: 0; }
-.workspace-top { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
-.workspace-top h2 { margin: 0; }
-#meetingMeta { font-size: 12px; color: #66756c; }
-.controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-.counter { display: flex; align-items: center; gap: 7px; background: #f1f5f1; padding: 4px 7px; border-radius: 9px; font-size: 12px; }
-.counter button { width: 25px; height: 25px; border: 0; border-radius: 6px; background: #d7e6d9; color: #214631; font-weight: bold; }
-#resetBtn { border: 1px solid #d8a9a9; background: #fdf0f0; color: #8a2a2a; border-radius: 9px; padding: 6px 14px; font-weight: 700; }
-#resetBtn:disabled { opacity: .45; cursor: not-allowed; }
-#numHint { margin-top: 8px; }
+.meeting {
+  width: 100%; text-align: left; border: 1px solid #e0e8e1; border-radius: 11px;
+  background: #f8faf8; padding: 9px 10px; color: #24382e; overflow-wrap: anywhere; transition: background .15s;
+}
+.meeting .mt { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-weight: 600; font-size: 13px; }
+.meeting.active { background: #e5f2e7; border-color: #6c9f7b; }
+.meeting small { display: block; color: var(--muted); margin-top: 3px; font-size: 11px; }
 
-#stageScroll { overflow: auto; width: 100%; margin-top: 10px; -webkit-overflow-scrolling: touch; }
-#stage { height: min(820px, max(620px, calc(100vh - 210px))); min-width: 740px; position: relative; border-radius: 13px; background: radial-gradient(ellipse at center, #f8f8f4, #e8eee8); border: 1px solid #e2e9e0; }
-.empty { padding: 24px; color: #647269; text-align: center; }
-.table { position: absolute; background: repeating-linear-gradient(91deg, #433020 0px, #523823 13px, #392a20 16px, #63432b 31px, #38271d 36px), #493221; border: 9px solid #38271f; border-radius: 20px; box-shadow: inset 0 0 0 2px #947452, 0 13px 22px #292d2547; }
+.workspace { padding: 12px 14px; min-width: 0; display: flex; flex-direction: column; }
+.workspace-top { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; }
+.ws-heading { min-width: 0; flex: 1 1 220px; }
+.ws-heading h2 { margin: 0; font-size: 16.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#meetingMeta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+.controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.counter {
+  display: inline-flex; align-items: center; gap: 6px; background: #f1f5f2;
+  padding: 4px 7px; border-radius: 10px; font-size: 12px; font-weight: 600;
+}
+.counter b { min-width: 18px; text-align: center; font-variant-numeric: tabular-nums; font-size: 13.5px; }
+.counter button {
+  width: 27px; height: 27px; border: 0; border-radius: 7px;
+  background: #d7e6da; color: #1d442e; font-weight: 800; font-size: 15px; line-height: 1;
+}
+#zoomBtn {
+  display: none; border: 1px solid #cdd9d0; background: #f5f8f5; color: #254234;
+  border-radius: 10px; padding: 6px 10px; font-size: 12px; font-weight: 700;
+}
+#resetBtn {
+  border: 1px solid #e0b4b4; background: #fdf1f1; color: #962828;
+  border-radius: 10px; padding: 6px 12px; font-size: 12.5px; font-weight: 700;
+}
+
+/* Баннер активного действия (выбор / пересадка) */
+#selectionBar {
+  display: none; align-items: center; justify-content: space-between; gap: 8px;
+  background: #fff6e0; border: 1px solid #e0be78; color: #4d3910;
+  padding: 7px 11px; border-radius: 10px; margin-top: 8px; font-size: 12.5px; font-weight: 650;
+}
+#selectionBar.show { display: flex; }
+#selectionBar button {
+  border: 0; background: #e8cfa0; color: #3b2a08; border-radius: 7px; padding: 4px 9px; font-size: 12px; font-weight: 700; flex: 0 0 auto;
+}
+
+#numHint { margin-top: 6px; font-size: 11.5px; }
+
+/* Сцена со столом */
+#stageScroll {
+  overflow: auto; width: 100%; margin-top: 8px; -webkit-overflow-scrolling: touch;
+  border-radius: 13px; background: radial-gradient(ellipse at center, #f9f9f6, #e7eee8);
+  border: 1px solid #e1e9e1; display: flex; justify-content: center; align-items: flex-start;
+  height: min(790px, max(580px, calc(100vh - 210px)));
+}
+#stageScaler { position: relative; flex: 0 0 auto; }
+#stage { position: relative; transform-origin: 0 0; }
+.empty { padding: 32px 20px; color: var(--muted); text-align: center; font-size: 13.5px; }
+
+.table {
+  position: absolute;
+  background: repeating-linear-gradient(91deg, #433020 0px, #523823 13px, #392a20 16px, #63432b 31px, #38271d 36px), #493221;
+  border: 9px solid #38271f; border-radius: 20px;
+  box-shadow: inset 0 0 0 2px #947452, 0 12px 22px #292d253d;
+}
 .table::after { content: ""; position: absolute; inset: 9px; border: 1px solid #a789613d; border-radius: 10px; pointer-events: none; }
-.monitor { position: absolute; width: 24px; height: 16px; transform: translate(-50%, -50%); border: 2px solid #b9c5c4; border-radius: 2px; background: #263c40; box-shadow: 0 2px 1px #1a1d1a8a; }
+
+.monitor {
+  position: absolute; width: 24px; height: 16px; transform: translate(-50%, -50%);
+  border: 2px solid #b9c5c4; border-radius: 2px; background: #263c40; box-shadow: 0 2px 1px #1a1d1a8a;
+}
 .monitor::after { content: ""; position: absolute; left: 8px; bottom: -6px; width: 4px; height: 4px; background: #abb8b7; }
 
-.seat { position: absolute; border: 1px solid #a5ada9; border-radius: 11px; background: #e5e7e6; box-shadow: inset 0 -6px 0 #c9cfcb, 0 3px 6px #1f33201a; padding: 3px 8px 6px; text-align: center; color: #29372f; display: flex; align-items: center; justify-content: center; flex-direction: column; overflow: hidden; line-height: 1.12; }
+.seat {
+  position: absolute; border: 1px solid #a5ada9; border-radius: 11px; background: #e5e7e6;
+  box-shadow: inset 0 -5px 0 #c9cfcb, 0 3px 6px #1f33201a; padding: 3px 7px 6px;
+  text-align: center; color: #29372f; display: flex; align-items: center; justify-content: center;
+  flex-direction: column; overflow: hidden; line-height: 1.1; cursor: pointer;
+  transition: transform .1s, outline-color .15s;
+}
+.seat:active { transform: scale(0.98); }
 .seat > * { pointer-events: none; }
 .seat.head { border-color: #b99a62; }
-.seat.occupied { background: #e5f1e7; border-color: #79a083; cursor: grab; }
+.seat.occupied { background: #e4f1e6; border-color: #769f80; cursor: grab; }
 .seat.occupied:active { cursor: grabbing; }
-.seat.drag-over { outline: 3px solid #d09b48; }
-.seat .name { font-size: 11.5px; font-weight: 750; width: 100%; overflow: hidden; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.seat.occupied .name { font-size: 14px; font-weight: 800; text-transform: uppercase; line-height: 1.08; }
-.seat .tag { color: #718070; font-size: 10px; }
-.seat .name.ceo-name { color: #c81e1e; }
-.seat .ceo-tag { color: #c81e1e; font-size: 9.5px; font-weight: 800; letter-spacing: .3px; }
+.seat.drag-over, .seat.selected-seat { outline: 3px solid #d09b48; }
+.seat .name {
+  font-size: 11.5px; font-weight: 700; width: 100%; overflow: hidden; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+/* Посаженные ФИО: CAPSLOCK, bold, на 2 кегля крупнее */
+.seat.occupied .name { font-size: 14.5px; font-weight: 800; text-transform: uppercase; line-height: 1.07; }
+.seat .tag { color: #6e7d75; font-size: 10px; }
+.seat .name.ceo-name { color: var(--danger); }
+.seat .ceo-tag { color: var(--danger); font-size: 9.5px; font-weight: 800; letter-spacing: .25px; margin-top: 1px; }
 
-.seat-num { position: absolute; border-radius: 50%; background: #183c34; color: #fff; font-weight: 800; display: grid; place-items: center; pointer-events: none; box-shadow: 0 2px 5px #0004; border: 2px solid #fff; z-index: 5; line-height: 1; }
+/* Крупные (×2) номера мест между стулом и столом */
+.seat-num {
+  position: absolute; border-radius: 50%; background: var(--brand); color: #fff; font-weight: 800;
+  display: grid; place-items: center; pointer-events: none; box-shadow: 0 2px 5px #0004;
+  border: 2px solid #fff; z-index: 5; line-height: 1; font-variant-numeric: tabular-nums;
+}
 .seat-num.ceo { background: #a07c2e; }
 
-body.has-selected-person .seat { outline: 1px dashed #9db89f; }
-.dock { position: absolute; display: flex; flex-wrap: wrap; gap: 3px; align-content: center; align-items: center; border-radius: 8px; padding: 2px; }
+body.has-selected-person .seat { outline: 1.5px dashed #7ba685; }
+body.has-selected-device .seat.occupied { outline: 1.5px dashed #c79e52; }
+
+.dock {
+  position: absolute; display: flex; flex-wrap: wrap; gap: 3px;
+  align-content: center; align-items: center; border-radius: 8px; padding: 2px; z-index: 6;
+}
 .dock.L { justify-content: flex-end; }
 .dock.R { justify-content: flex-start; }
 .dock.H { justify-content: center; flex-wrap: nowrap; }
-body.drag-device .dock, body.has-selected-device .dock, body.drag-device #people .item, body.has-selected-device #people .item { outline: 1px dashed #c7a46a; }
+body.drag-device .dock, body.has-selected-device .dock,
+body.drag-device #people .item, body.has-selected-device #people .item { outline: 1px dashed #c7a46a; }
 body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; }
 .dock.drag-over { outline: 2px solid #d09b48 !important; background: #fbecd0 !important; }
-.dev { width: var(--s, 20px); height: var(--s, 20px); border-radius: 6px; background: #fffdf7; border: 1px solid #c9ad78; display: grid; place-items: center; font-size: calc(var(--s, 20px) * .62); line-height: 1; cursor: grab; position: relative; box-shadow: 0 1px 3px #3b2a1530; user-select: none; min-width: 20px; min-height: 20px; }
-.dev:active { cursor: grabbing; }
-.dev.selected { outline: 2px solid #d09b48; }
+
+.dev {
+  width: var(--s, 20px); height: var(--s, 20px); border-radius: 6px; background: #fffdf7;
+  border: 1px solid #c9ad78; display: grid; place-items: center; font-size: calc(var(--s, 20px) * .62);
+  line-height: 1; cursor: grab; position: relative; box-shadow: 0 1px 3px #3b2a1530; min-width: 19px; min-height: 19px;
+}
+.dev.selected { outline: 2px solid #d09b48; background: #fff2d6; }
 .dev sub { position: absolute; right: 1px; bottom: 0; font-size: 8px; font-weight: 800; color: #7a6234; line-height: 1; }
 
-.item { border: 1px solid #d8e2d8; border-radius: 9px; padding: 8px 9px; background: #f8faf7; font-size: 13px; overflow-wrap: anywhere; cursor: grab; user-select: none; }
-.item:active { cursor: grabbing; }
-.item small { display: block; color: #718078; font-size: 11px; margin-top: 2px; }
-.item small.ceo-role { color: #c81e1e; font-weight: 800; }
-.item.ceo-item { color: #c81e1e; font-weight: 800; border-color: #e5a3a3; background: #fdf0f0; }
-.item.selected { outline: 2px solid #d09b48; }
+/* Элементы правой панели (ПК) */
+.item {
+  border: 1px solid #d8e2d9; border-radius: 10px; padding: 8px 10px; background: #f8faf8;
+  font-size: 13px; overflow-wrap: anywhere; cursor: grab;
+}
+.item small { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
+.item small.ceo-role { color: var(--danger); font-weight: 800; }
+.item.ceo-item { color: var(--danger); font-weight: 800; border-color: #e5a3a3; background: #fdf0f0; }
+.item.selected { outline: 2.5px solid #d09b48; background: #fff9ec; }
 .item.drag-over { outline: 2px solid #d09b48; }
 .item-devs { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
 .item-devs .dev { --s: 22px; width: 22px; height: 22px; font-size: 14px; }
 
 #equipment { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-#equipment .item { text-align: center; font-size: 12px; padding: 7px 3px; }
-#equipment.drag-over, #people.drag-over { background: #f3f8f2; border-radius: 9px; }
-.drop-return { border: 1px dashed #9aaa9a; border-radius: 9px; padding: 10px; margin: 9px 0; text-align: center; color: #52675a; font-size: 12px; }
+#equipment .item { text-align: center; font-size: 12px; padding: 8px 4px; }
+#equipment.drag-over, #people.drag-over { background: #f2f8f2; border-radius: 10px; }
+.drop-return {
+  border: 1.5px dashed #9bb09f; border-radius: 10px; padding: 10px; margin: 9px 0;
+  text-align: center; color: #52675a; font-size: 12px; cursor: pointer;
+}
 .drop-return.drag-over { background: #e7f2e7; }
-.divider { border: 0; border-top: 1px solid #e2e8e1; margin: 16px 0; }
-#ceoName { width: 100%; margin-top: 6px; padding: 8px; border: 1px solid #cbd7cd; border-radius: 8px; }
-#printArea { display: none; }
-#toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #183c34; color: #fff; padding: 10px 18px; border-radius: 12px; font-size: 13px; display: none; z-index: 9999; box-shadow: 0 6px 20px #0005; max-width: 92vw; text-align: center; }
+.divider { border: 0; border-top: 1px solid #e3eae4; margin: 14px 0; }
+.ceo-input { width: 100%; margin-top: 5px; padding: 8px 10px; border: 1px solid #cbd7cd; border-radius: 9px; font-size: 14px; }
 
-@media (max-width: 1050px) {
-  main { grid-template-columns: minmax(180px, 1fr) minmax(215px, 1fr); }
-  .workspace { grid-column: 1 / -1; grid-row: 2; }
+/* Мобильная нижняя панель быстрого управления (iPhone) */
+#mobileTray { display: none; }
+
+/* Модальная шторка (iOS Bottom Sheet) */
+#sheetBackdrop {
+  position: fixed; inset: 0; background: #0d1f1a66; backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+  z-index: 100; display: none; align-items: flex-end; justify-content: center;
 }
-@media (max-width: 820px) {
-  main { grid-template-columns: 1fr; }
-  .workspace { grid-column: 1; grid-row: 2; }
-  .panel { min-height: auto; }
-  #meetings { display: flex; overflow-x: auto; padding-bottom: 6px; }
-  .meeting { min-width: 230px; flex: 0 0 auto; }
-  #stage { min-width: 700px; }
-  .tech-sep { display: none; }
+#sheetBackdrop.open { display: flex; }
+#bottomSheet {
+  width: 100%; max-width: 540px; max-height: 84dvh; background: #fff;
+  border-radius: 20px 20px 0 0; box-shadow: 0 -8px 30px #0000002e;
+  display: flex; flex-direction: column; overflow: hidden;
+  padding-bottom: env(safe-area-inset-bottom, 12px);
+  animation: slideUp .18s ease-out;
 }
+@keyframes slideUp { from { transform: translateY(40px); opacity: .6; } to { transform: translateY(0); opacity: 1; } }
+@media (min-width: 901px) {
+  #sheetBackdrop { align-items: center; }
+  #bottomSheet { border-radius: 18px; max-height: 80vh; padding-bottom: 12px; }
+}
+.sheet-handle { width: 38px; height: 4px; border-radius: 3px; background: #d0d8d2; margin: 8px auto 2px; flex: 0 0 auto; }
+.sheet-head {
+  padding: 8px 16px 11px; border-bottom: 1px solid #e6ece7;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.sheet-head h3 { margin: 0; font-size: 16px; line-height: 1.2; }
+.sheet-head small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.sheet-close {
+  width: 32px; height: 32px; border-radius: 50%; border: 0; background: #eef2ef;
+  color: #394b41; font-size: 17px; font-weight: 700; flex: 0 0 auto;
+}
+.sheet-body { padding: 12px 16px 16px; overflow-y: auto; -webkit-overflow-scrolling: touch; display: grid; gap: 12px; }
+.sheet-sec-title { font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin-bottom: 6px; }
+.sheet-actions-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.sheet-btn {
+  padding: 11px 12px; border-radius: 11px; border: 1px solid #d5e0d7; background: #f6f9f6;
+  font-weight: 700; font-size: 13.5px; color: var(--brand); text-align: center;
+}
+.sheet-btn.danger { background: #fdf1f1; border-color: #e6bcbc; color: #9c2525; }
+.sheet-list { display: grid; gap: 6px; }
+.sheet-person {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px 12px; border-radius: 11px; border: 1px solid #dfe7e0; background: #f9fbf9;
+  text-align: left; font-size: 14px; font-weight: 650; color: var(--text);
+}
+.sheet-person:active { background: #e6f2e8; }
+.sheet-person.ceo { color: var(--danger); border-color: #ebb5b5; background: #fff5f5; font-weight: 800; }
+.sheet-person small { display: block; font-size: 11.5px; color: var(--muted); font-weight: 500; margin-top: 1px; }
+.sheet-person small.ceo-sub { color: var(--danger); font-weight: 800; }
+.sheet-equip-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+.equip-toggle {
+  padding: 9px 10px; border-radius: 11px; border: 1.5px solid #dde5de; background: #f9fbf9;
+  text-align: left; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 650;
+}
+.equip-toggle.mine { border-color: #5d9b70; background: #e6f4ea; color: #164027; }
+.equip-toggle .et-ic { font-size: 19px; line-height: 1; }
+.equip-toggle .et-info { min-width: 0; flex: 1; }
+.equip-toggle .et-sub { display: block; font-size: 10.5px; color: var(--muted); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.equip-toggle.mine .et-sub { color: #256f3d; font-weight: 700; }
+
+.settings-field { display: grid; gap: 5px; font-size: 13px; font-weight: 650; }
+.settings-field input {
+  width: 100%; padding: 10px 11px; border: 1px solid #cbd7cd; border-radius: 10px; font-size: 16px;
+}
+.sync-info-box {
+  padding: 10px 12px; border-radius: 11px; background: #eff6f1; border: 1px solid #cde0d3;
+  font-size: 12.5px; color: #204231; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+
+#printArea { display: none; }
+#toast {
+  position: fixed; top: calc(64px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
+  background: #183c34eb; color: #fff; padding: 9px 16px; border-radius: 99px; font-size: 13px; font-weight: 600;
+  display: none; z-index: 200; box-shadow: 0 6px 20px #0004; max-width: 90vw; text-align: center; pointer-events: none;
+}
+
+/* ============ АДАПТАЦИЯ ВЕБ-ПРИЛОЖЕНИЯ ДЛЯ IPHONE / МОБИЛЬНЫХ ============ */
+@media (max-width: 900px) {
+  html, body { height: 100dvh; overflow: hidden; }
+  body { display: flex; flex-direction: column; }
+  #printBtn, .brand-block, .desktop-panel, .ws-heading, #numHint { display: none !important; }
+  #mobileMeetingBtn, #zoomBtn { display: inline-flex; }
+
+  header { padding: calc(8px + env(safe-area-inset-top, 0px)) 10px 8px; gap: 7px; }
+  .actions { gap: 5px; }
+  button.primary { padding: 8px 11px; font-size: 13px; border-radius: 10px; }
+  button.icon-btn { padding: 7px 9px; font-size: 15px; border-radius: 10px; }
+
+  main {
+    flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column;
+    padding: 6px 8px 4px; gap: 0; width: 100%; margin: 0;
+  }
+  .workspace {
+    flex: 1 1 auto; min-height: 0; padding: 7px 8px; border-radius: 14px;
+    display: flex; flex-direction: column;
+  }
+  .workspace-top { justify-content: space-between; gap: 5px; flex-wrap: nowrap; }
+  .controls { width: 100%; justify-content: space-between; gap: 5px; flex-wrap: nowrap; }
+  .counter { padding: 3px 5px; gap: 4px; font-size: 11px; border-radius: 9px; }
+  .counter button { width: 28px; height: 28px; font-size: 16px; }
+  #zoomBtn { padding: 6px 8px; font-size: 11.5px; }
+  #resetBtn { padding: 6px 9px; font-size: 11.5px; }
+
+  #stageScroll {
+    flex: 1 1 auto; min-height: 0; height: auto; margin-top: 6px;
+    align-items: center; justify-content: center;
+  }
+  #stageScroll.zoomed { align-items: flex-start; justify-content: flex-start; }
+
+  /* Нижняя панель быстрого доступа под палец */
+  #mobileTray {
+    display: flex; flex-direction: column; flex: 0 0 auto;
+    background: var(--card); border-top: 1px solid var(--border);
+    padding: 6px 10px calc(6px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -4px 16px #183c3412; z-index: 15;
+  }
+  .tray-tabs {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;
+    background: #eef2ef; padding: 3px; border-radius: 10px; margin-bottom: 6px;
+  }
+  .tray-tab {
+    border: 0; background: transparent; border-radius: 8px; padding: 5px 4px;
+    font-size: 11.5px; font-weight: 700; color: var(--muted); white-space: nowrap;
+  }
+  .tray-tab.active { background: #fff; color: var(--brand); box-shadow: 0 1px 4px #00000014; }
+  .tray-content {
+    display: flex; gap: 6px; overflow-x: auto; padding: 2px 1px 4px;
+    -webkit-overflow-scrolling: touch; min-height: 52px; align-items: center;
+  }
+  .tray-content::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: 0 0 auto; border: 1px solid #d5e0d7; background: #f7faf7; border-radius: 11px;
+    padding: 7px 11px; font-size: 12.5px; font-weight: 650; color: var(--text);
+    display: inline-flex; align-items: center; gap: 6px; max-width: 220px;
+  }
+  .chip .chip-main { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chip small { display: block; font-size: 10px; color: var(--muted); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chip.ceo { color: var(--danger); border-color: #e6aaaa; background: #fff4f4; font-weight: 800; }
+  .chip.selected { outline: 2.5px solid #d09b48; background: #fff8e6; }
+  .chip.assigned { background: #edf5ef; border-color: #9ec2a8; }
+  .chip-x {
+    width: 20px; height: 20px; border-radius: 50%; background: #e3ebe5; color: #364a3e;
+    display: inline-grid; place-items: center; font-size: 12px; font-weight: 800; flex: 0 0 auto;
+  }
+  .tray-empty { font-size: 12px; color: var(--muted); padding: 6px 4px; }
+}
+
 @media print {
   @page { size: A4 portrait; margin: 8mm; }
-  body { background: #fff; }
-  header, .tech, main { display: none !important; }
+  html, body { height: auto !important; overflow: visible !important; background: #fff; }
+  header, main, #mobileTray, #sheetBackdrop, #toast { display: none !important; }
   #printArea { display: block; }
   #printArea img { display: block; width: 100%; height: auto; max-height: 280mm; object-fit: contain; }
 }
 </style>
 </head>
 <body>
+
 <header>
-  <div><h1>Схема рассадки</h1><small>Совещания · участники · оборудование</small></div>
+  <div class="brand-block">
+    <div class="brand-title">
+      <h1>Схема рассадки</h1>
+      <div class="status-line">
+        <span class="live-dot" id="liveDot"></span>
+        <span id="desktopStatus">Подключение к Google Таблице…</span>
+        <span class="sync-pill" id="syncPill" title="Автоматическая мгновенная синхронизация всех устройств">⟳ Синхр.…</span>
+      </div>
+    </div>
+  </div>
+
+  <button id="mobileMeetingBtn" type="button" title="Выбрать совещание">
+    <span class="mm-text">
+      <span class="mm-title" id="mobileMeetingTitle">Загрузка совещаний…</span>
+      <span class="mm-sub">
+        <span class="live-dot" id="mobileLiveDot"></span>
+        <span id="mobileSyncDot" title="Мгновенная синхронизация">⚡</span>
+        <span id="mobileMeetingSub">Автообновление 10 сек.</span>
+      </span>
+    </span>
+    <span class="mm-arrow">▾</span>
+  </button>
+
   <div class="actions">
-    <button class="secondary" id="printBtn">Печать A4</button>
-    <button class="primary" id="saveBtn">Сохранить JPEG</button>
+    <button class="icon-btn" id="refreshBtn" type="button" title="Обновить данные сейчас">↻</button>
+    <button class="icon-btn" id="settingsBtn" type="button" title="Параметры и CSV">⚙</button>
+    <button class="secondary" id="printBtn" type="button">Печать A4</button>
+    <button class="primary" id="saveBtn" type="button">JPEG</button>
   </div>
 </header>
 
-<section class="tech">
-  <div class="tech-col">
-    <button class="primary" id="refreshBtn" title="Обновить список совещаний сейчас">Обновить</button>
-    <button class="secondary" id="csvBtn" title="Импортировать локальный CSV при отсутствии сети">CSV</button>
-    <input id="csvFile" type="file" accept=".csv,text/csv" hidden>
-    <details class="conn">
-      <summary title="Постоянное подключение настроено автоматически">⚙</summary>
-      <div class="conn-pop">
-        <label>Постоянная ссылка на Google Таблицу
-          <input id="sheetUrl" value="https://docs.google.com/spreadsheets/d/1P9F-tx_hOs6YXFbtlD7sgNXV7cBKa22F-EtlL3nVl2M/edit?usp=sharing">
-        </label>
-        <label>Ключ Google Sheets API
-          <input id="apiKey" type="password" autocomplete="off" value="AIzaSyCzxjIebth6sWkckCp_UBmVgucupfQALeM">
-        </label>
-      </div>
-    </details>
-    <span class="hint">Автообновление: 10 сек.</span>
-    <span id="status" role="status">Подключение к Google Таблице…</span>
-  </div>
-  <div class="tech-sep"></div>
-  <div class="tech-col">
-    <label>Устройство <input id="deviceName"></label>
-    <label>Код <input id="syncCode" inputmode="numeric" autocomplete="off" placeholder="------" maxlength="10"></label>
-    <button class="primary" id="syncBtn">Подкл.</button>
-    <button class="secondary" id="syncNewBtn" title="Создать новый код синхронизации">Новый</button>
-    <button class="secondary" id="syncOffBtn" disabled>Выкл</button>
-    <span id="qrWrap" hidden><img id="qrImg" alt="QR"><b id="qrCodeBig"></b></span>
-    <span id="syncStatus">Синхр. выкл.</span>
-  </div>
-</section>
-
 <main>
-  <aside class="panel">
+  <aside class="panel desktop-panel">
     <h2>Запланированные совещания</h2>
     <div id="meetings"></div>
   </aside>
 
   <section class="workspace">
     <div class="workspace-top">
-      <div>
+      <div class="ws-heading">
         <h2 id="meetingTitle">Выберите совещание</h2>
         <div id="meetingMeta"></div>
       </div>
       <div class="controls">
         <div class="counter">Слева
-          <button data-side="L" data-change="-1" title="Убрать стул слева">−</button>
+          <button data-side="L" data-change="-1" type="button" title="Убрать стул слева">−</button>
           <b id="leftCount">5</b>
-          <button data-side="L" data-change="1" title="Добавить стул слева">+</button>
+          <button data-side="L" data-change="1" type="button" title="Добавить стул слева">+</button>
         </div>
         <div class="counter">Справа
-          <button data-side="R" data-change="-1" title="Убрать стул справа">−</button>
+          <button data-side="R" data-change="-1" type="button" title="Убрать стул справа">−</button>
           <b id="rightCount">5</b>
-          <button data-side="R" data-change="1" title="Добавить стул справа">+</button>
+          <button data-side="R" data-change="1" type="button" title="Добавить стул справа">+</button>
         </div>
-        <button id="resetBtn" title="Вернуть всех в список, оборудование на панель, ГД во главу стола">Сброс</button>
+        <button id="zoomBtn" type="button">Крупно</button>
+        <button id="resetBtn" type="button" title="Сбросить рассадку совещания">Сброс</button>
       </div>
     </div>
-    <div class="muted" id="numHint">Номера — между стулом и столом. Слева и справа нумерация параллельная: № 1 — дальнее от ГД кресло, далее по порядку в сторону ГД.</div>
-    <div id="stageScroll"><div id="stage"></div></div>
+
+    <div id="selectionBar">
+      <span id="selectionText">Выберите место за столом</span>
+      <button id="selectionCancelBtn" type="button">Отмена</button>
+    </div>
+
+    <div class="muted" id="numHint">Номера — между стулом и столом (параллельно с № 1 в сторону ГД). Все изменения мгновенно синхронизируются между устройствами.</div>
+
+    <div id="stageScroll">
+      <div id="stageScaler">
+        <div id="stage"></div>
+      </div>
+    </div>
   </section>
 
-  <aside class="panel">
+  <aside class="panel desktop-panel">
     <h2>Участники без места <span id="freeCount"></span></h2>
-    <p>ПК: перетащите ФИО на стул. iPhone: тап по ФИО → тап по стулу. Если место занято, прежний участник вернётся в список.</p>
+    <p>Перетащите ФИО на стул (если занят — прежний участник вернётся сюда).</p>
     <div id="people"></div>
-    <div class="drop-return" id="returnZone">Перетащите сюда участника (или тапните при выбранном), чтобы освободить стул</div>
+    <div class="drop-return" id="returnZone">Перетащите сюда участника, чтобы освободить стул</div>
     <hr class="divider">
     <h2>Оборудование</h2>
-    <p>Закрепляется за любым участником (на стуле или в списке). Перетаскивается между участниками. Снять: перетащить обратно сюда или тапнуть по значку дважды.</p>
+    <p>Перетащите на любого участника (на стуле или в списке). Двойной клик / возврат сюда — снять.</p>
     <div id="equipment"></div>
     <hr class="divider">
-    <label style="font-size:12px;font-weight:700">ФИО генерального директора, если его нет в таблице
-      <input id="ceoName" value="Генеральный директор">
+    <label style="font-size:12px;font-weight:700">ФИО генерального директора (если нет в таблице)
+      <input id="ceoName" class="ceo-input" value="Генеральный директор">
     </label>
-    <p>Генеральный директор по умолчанию занимает место во главе стола. Его можно перетащить на любое другое место.</p>
   </aside>
 </main>
 
+<!-- Нижняя панель быстрого управления для iPhone -->
+<section id="mobileTray">
+  <div class="tray-tabs">
+    <button class="tray-tab active" data-tab="people" type="button">Без места <span id="tabPeopleCount"></span></button>
+    <button class="tray-tab" data-tab="equip" type="button">Оборудование <span id="tabEquipCount"></span></button>
+    <button class="tray-tab" data-tab="meetings" type="button">Совещания <span id="tabMeetingsCount"></span></button>
+  </div>
+  <div class="tray-content" id="trayContent"></div>
+</section>
+
+<!-- Шторка iOS (управление креслом / выбор совещания / настройки) -->
+<div id="sheetBackdrop">
+  <div id="bottomSheet" role="dialog" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <div>
+        <h3 id="sheetTitle">Параметры</h3>
+        <small id="sheetSub"></small>
+      </div>
+      <button class="sheet-close" id="sheetCloseBtn" type="button" aria-label="Закрыть">✕</button>
+    </div>
+    <div class="sheet-body" id="sheetBody"></div>
+  </div>
+</div>
+
+<input id="csvFile" type="file" accept=".csv,text/csv" hidden>
 <div id="printArea"></div>
 <div id="toast"></div>
 
@@ -249,7 +584,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
   "use strict";
   const $ = id => document.getElementById(id);
 
-  // Постоянный источник данных и ключ API (подключение выполняется автоматически)
+  // Постоянный источник информации и API-ключ (автоматическое подключение без запросов)
   const DEFAULT_URL = "https://docs.google.com/spreadsheets/d/1P9F-tx_hOs6YXFbtlD7sgNXV7cBKa22F-EtlL3nVl2M/edit?usp=sharing";
   const DEFAULT_API_KEY = "AIzaSyCzxjIebth6sWkckCp_UBmVgucupfQALeM";
   const STORE = "meeting-seating-v3";
@@ -257,20 +592,38 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
   const CEO_RE = /генерал\S*\s+директор|ген\.?\s*директор|гендиректор/i;
 
   const devices = [
-    {id: "mouse1",    label: "Мышь 1",            icon: "🖱", n: "1"},
-    {id: "mouse2",    label: "Мышь 2",            icon: "🖱", n: "2"},
-    {id: "mouse3",    label: "Мышь 3",            icon: "🖱", n: "3"},
-    {id: "keyboard1", label: "Клавиатура 1",      icon: "⌨", n: "1"},
-    {id: "keyboard2", label: "Клавиатура 2",      icon: "⌨", n: "2"},
-    {id: "phone1",    label: "Телефонная трубка", icon: "☎", n: ""}
+    {id: "mouse1",    label: "Мышь 1",            short: "Мышь 1",  icon: "🖱", n: "1"},
+    {id: "mouse2",    label: "Мышь 2",            short: "Мышь 2",  icon: "🖱", n: "2"},
+    {id: "mouse3",    label: "Мышь 3",            short: "Мышь 3",  icon: "🖱", n: "3"},
+    {id: "keyboard1", label: "Клавиатура 1",      short: "Клав. 1", icon: "⌨", n: "1"},
+    {id: "keyboard2", label: "Клавиатура 2",      short: "Клав. 2", icon: "⌨", n: "2"},
+    {id: "phone1",    label: "Телефонная трубка", short: "Трубка",  icon: "☎", n: ""}
   ];
 
+  let sheetUrl = DEFAULT_URL;
+  let apiKey = DEFAULT_API_KEY;
   let meetings = [], current = null, drag = null, selected = null, layouts = {};
   let loading = false, localCsv = false, signature = "", pendingRender = false;
-  let applyingRemote = false, lastBcastSig = "", pendingRemoteMeeting = null;
-  let syncCode = null, peer = null, peerMode = "", conns = [], syncEnabled = false, lastSyncTs = 0;
-  const senderId = Math.random().toString(36).slice(2, 10);
-  let bcastTimer = 0, toastTimer = 0;
+  let mobileTab = "people", zoomMode = "fit", activeSheet = null, toastTimer = 0;
+
+  // Переменные мгновенной облачной синхронизации
+  const clientId = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+  let logicalClock = Date.now();
+  let ceoUpdatedAt = 0;
+  let mqttClients = [];
+  let localBus = null;
+  let publishTimer = 0;
+  let lastPublishAt = 0;
+  let seedTimer = 0;
+  let receivedCloudState = false;
+
+  const isMobileScreen = () => window.matchMedia("(max-width: 900px)").matches;
+  const isIOS = () => /iPhone|iPad|iPod/i.test(navigator.userAgent || "") || Boolean(navigator.standalone);
+
+  function nextClock(minVal = 0) {
+    logicalClock = Math.max(Date.now(), logicalClock, Number(minVal) || 0) + 1;
+    return logicalClock;
+  }
 
   (function load() {
     let saved = {};
@@ -279,57 +632,374 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
               JSON.parse(localStorage.getItem("meeting-seating-v2") || "null") ||
               JSON.parse(localStorage.getItem("meeting-seating-v1") || "{}") || {};
     } catch (_) {}
-    layouts = saved.layouts || {};
-    // Всегда используем постоянную ссылку и ключ по умолчанию (если они не переопределены вручную на другой валидный ресурс)
-    const savedUrl = (saved.url || "").trim();
-    const hasValidSavedUrl = /\/spreadsheets\/d\/[a-zA-Z0-9_-]+/.test(savedUrl) && !savedUrl.includes("1P9F-tx_hOs6YXFbtlD7sgNXV7cBKa22F-EtlL3nVl2M");
-    $("sheetUrl").value = hasValidSavedUrl ? savedUrl : DEFAULT_URL;
-    $("apiKey").value = (saved.key && saved.key.trim()) ? saved.key.trim() : DEFAULT_API_KEY;
+    const rawLayouts = saved.layouts || {};
+    layouts = {};
+    for (const [k, v] of Object.entries(rawLayouts)) {
+      if (!v || typeof v !== "object") continue;
+      const hasEdits = Object.keys(v.equipment || {}).length > 0 ||
+                       Object.keys(v.seats || {}).length > 1 ||
+                       (Number(v.L) && Number(v.L) !== 5) ||
+                       (Number(v.R) && Number(v.R) !== 5);
+      const u = Number(v.u) || (hasEdits ? 1 : 0);
+      if (u > logicalClock) logicalClock = u;
+      layouts[k] = {
+        L: Number(v.L) || 5,
+        R: Number(v.R) || 5,
+        seats: Object.assign({}, v.seats || {}),
+        equipment: Object.assign({}, v.equipment || {}),
+        ceoAuto: Boolean(v.ceoAuto),
+        u
+      };
+    }
+    ceoUpdatedAt = Number(saved.ceoTs) || 0;
+    if (ceoUpdatedAt > logicalClock) logicalClock = ceoUpdatedAt;
+
+    const sUrl = (saved.url || "").trim();
+    const customValid = /\/spreadsheets\/d\/[a-zA-Z0-9_-]+/.test(sUrl) && !sUrl.includes("1P9F-tx_hOs6YXFbtlD7sgNXV7cBKa22F-EtlL3nVl2M");
+    sheetUrl = customValid ? sUrl : DEFAULT_URL;
+    apiKey = (saved.key && saved.key.trim()) ? saved.key.trim() : DEFAULT_API_KEY;
     $("ceoName").value = saved.ceo || "Генеральный директор";
-    const isIPhone = /iPhone|iPad|iPod/i.test(navigator.userAgent || "");
-    $("deviceName").value = saved.device || (isIPhone ? "iPhone" : "ПК");
-    $("syncCode").value = saved.syncCode || "";
-    try {
-      const m = (location.hash || "").match(/sync=([A-Za-z0-9]+)/);
-      if (m) $("syncCode").value = m[1];
-    } catch (_) {}
+    if (!isMobileScreen()) $("saveBtn").textContent = "Сохранить JPEG";
   })();
 
+  function pruneLayouts() {
+    const keys = Object.keys(layouts);
+    if (keys.length <= 80) return;
+    const activeIds = new Set(meetings.map(m => m.id));
+    const removable = keys
+      .filter(k => !activeIds.has(k))
+      .sort((a, b) => (Number(layouts[b]?.u) || 0) - (Number(layouts[a]?.u) || 0));
+    for (let i = 50; i < removable.length; i++) {
+      delete layouts[removable[i]];
+    }
+  }
+
   function persist() {
+    pruneLayouts();
     try {
       localStorage.setItem(STORE, JSON.stringify({
         layouts,
-        url: $("sheetUrl").value.trim() || DEFAULT_URL,
-        key: $("apiKey").value.trim() || DEFAULT_API_KEY,
+        url: sheetUrl || DEFAULT_URL,
+        key: apiKey || DEFAULT_API_KEY,
         ceo: $("ceoName").value,
-        device: $("deviceName").value,
-        syncCode: $("syncCode").value.trim()
+        ceoTs: ceoUpdatedAt
       }));
     } catch (_) {}
   }
 
-  function status(t, c) {
-    $("status").textContent = t;
-    $("status").className = c || "good";
+  function status(text, level = "good") {
+    $("desktopStatus").textContent = text;
+    const cls = "live-dot" + (level === "bad" ? " bad" : (level === "warn" ? " warn" : ""));
+    $("liveDot").className = cls;
+    $("mobileLiveDot").className = cls;
+    if (!current) $("mobileMeetingSub").textContent = text;
   }
 
-  function toast(t) {
+  function toast(text) {
     const el = $("toast");
-    el.textContent = t;
+    el.textContent = text;
     el.style.display = "block";
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { el.style.display = "none"; }, 2300);
-  }
-
-  function setSyncStatus(t, cls) {
-    const el = $("syncStatus");
-    el.textContent = t;
-    el.className = cls || "";
+    toastTimer = setTimeout(() => { el.style.display = "none"; }, 2200);
   }
 
   const clean = v => String(v == null ? "" : v).replace(/\s+/g, " ").trim();
   const cell = (row, i) => i < 0 ? "" : clean(row ? row[i] : "");
 
+  /* ---------- Мгновенная автоматическая синхронизация всех устройств ---------- */
+  function syncTopic() {
+    const sid = safeIdentity().id + "|" + DEFAULT_API_KEY.slice(0, 14);
+    let h1 = 0x811c9dc5, h2 = 0x01000193;
+    for (let i = 0; i < sid.length; i++) {
+      const ch = sid.charCodeAt(i);
+      h1 ^= ch; h1 = Math.imul(h1, 0x01000193);
+      h2 ^= (ch + i); h2 = Math.imul(h2, 0x85ebca6b);
+    }
+    const hex = (h1 >>> 0).toString(16).padStart(8, "0") + (h2 >>> 0).toString(16).padStart(8, "0");
+    return "rassadka-live-v4/chan-" + hex + "/state";
+  }
+
+  function buildSyncPayload() {
+    pruneLayouts();
+    const exported = {};
+    for (const [mId, l] of Object.entries(layouts)) {
+      if (!l || typeof l !== "object") continue;
+      if ((Number(l.u) || 0) > 0) {
+        exported[mId] = {
+          L: clamp(l.L),
+          R: clamp(l.R),
+          seats: l.seats || {},
+          equipment: l.equipment || {},
+          ceoAuto: Boolean(l.ceoAuto),
+          u: Number(l.u) || 0
+        };
+      }
+    }
+    return {
+      v: 4,
+      sender: clientId,
+      ts: logicalClock,
+      ceo: $("ceoName").value,
+      ceoTs: ceoUpdatedAt,
+      layouts: exported
+    };
+  }
+
+  function updateSyncIndicator(pulse = false) {
+    const onlineCount = mqttClients.filter(c => c && c.connected).length;
+    const pill = $("syncPill");
+    const mDot = $("mobileSyncDot");
+    const settingsStatus = document.getElementById("settingsSyncStatus");
+
+    if (onlineCount > 0) {
+      pill.textContent = "⚡ Синхр. онлайн";
+      pill.classList.add("online");
+      mDot.classList.add("online");
+      if (settingsStatus) settingsStatus.textContent = "Активна ⚡ (все устройства синхронизируются мгновенно)";
+    } else {
+      pill.textContent = navigator.onLine === false ? "Офлайн" : "⟳ Синхр.…";
+      pill.classList.remove("online");
+      mDot.classList.remove("online");
+      if (settingsStatus) settingsStatus.textContent = navigator.onLine === false ? "Ожидание интернета…" : "Подключение к облаку…";
+    }
+
+    if (pulse) {
+      pill.classList.add("pulse");
+      mDot.classList.add("pulse");
+      setTimeout(() => {
+        pill.classList.remove("pulse");
+        mDot.classList.remove("pulse");
+      }, 380);
+    }
+  }
+
+  function publishNow() {
+    clearTimeout(publishTimer);
+    publishTimer = 0;
+    lastPublishAt = Date.now();
+    persist();
+    const raw = JSON.stringify(buildSyncPayload());
+    const topic = syncTopic();
+
+    if (localBus) {
+      try { localBus.postMessage(raw); } catch (_) {}
+    }
+    mqttClients.forEach(cl => {
+      try {
+        if (cl && cl.connected) {
+          cl.publish(topic, raw, {qos: 1, retain: true});
+        }
+      } catch (_) {}
+    });
+    updateSyncIndicator(true);
+  }
+
+  function schedulePublish() {
+    const elapsed = Date.now() - lastPublishAt;
+    if (elapsed >= 120) {
+      publishNow();
+    } else if (!publishTimer) {
+      publishTimer = setTimeout(publishNow, 120 - elapsed);
+    }
+  }
+
+  function commitLayoutChange(l) {
+    if (!l) return;
+    l.u = nextClock(l.u);
+    schedulePublish();
+  }
+
+  function commitCeoChange() {
+    ceoUpdatedAt = nextClock(ceoUpdatedAt);
+    schedulePublish();
+  }
+
+  function applyIncomingState(raw, fromCloud = false) {
+    let msg = raw;
+    if (typeof raw === "string") {
+      try { msg = JSON.parse(raw); } catch (_) { return; }
+    }
+    if (!msg || msg.v !== 4) return;
+    if (fromCloud) receivedCloudState = true;
+    if (msg.sender === clientId) return;
+
+    if (Number(msg.ts) > logicalClock) logicalClock = Number(msg.ts);
+
+    let changed = false;
+    let localHasNewer = false;
+
+    const incCeoTs = Number(msg.ceoTs) || 0;
+    if (incCeoTs > ceoUpdatedAt && typeof msg.ceo === "string") {
+      $("ceoName").value = msg.ceo;
+      ceoUpdatedAt = incCeoTs;
+      if (incCeoTs > logicalClock) logicalClock = incCeoTs;
+      changed = true;
+    } else if (ceoUpdatedAt > incCeoTs && ceoUpdatedAt > 1) {
+      localHasNewer = true;
+    }
+
+    const incLayouts = msg.layouts || {};
+    for (const [mId, incL] of Object.entries(incLayouts)) {
+      if (!incL || typeof incL !== "object") continue;
+      const incU = Number(incL.u) || 0;
+      if (incU > logicalClock) logicalClock = incU;
+      const locL = layouts[mId];
+      const locU = locL ? (Number(locL.u) || 0) : -1;
+
+      if (incU > locU) {
+        layouts[mId] = {
+          L: clamp(incL.L),
+          R: clamp(incL.R),
+          seats: Object.assign({}, incL.seats || {}),
+          equipment: Object.assign({}, incL.equipment || {}),
+          ceoAuto: Boolean(incL.ceoAuto),
+          u: incU
+        };
+        changed = true;
+      } else if (locU > incU && locU > 1) {
+        localHasNewer = true;
+      }
+    }
+
+    if (fromCloud) {
+      for (const [mId, locL] of Object.entries(layouts)) {
+        const locU = Number(locL?.u) || 0;
+        if (locU > 1 && !incLayouts[mId]) {
+          localHasNewer = true;
+          break;
+        }
+      }
+    }
+
+    if (changed) {
+      persist();
+      updateSyncIndicator(true);
+      if (drag) pendingRender = true;
+      else render();
+    }
+    if (fromCloud && localHasNewer) {
+      schedulePublish();
+    }
+  }
+
+  function loadScriptWithFallback(urls) {
+    return new Promise((resolve, reject) => {
+      if (window.mqtt) return resolve(window.mqtt);
+      let idx = 0;
+      const next = () => {
+        if (idx >= urls.length) return reject(new Error("MQTT CDN недоступен"));
+        const s = document.createElement("script");
+        s.src = urls[idx++];
+        s.async = true;
+        s.onload = () => window.mqtt ? resolve(window.mqtt) : next();
+        s.onerror = next;
+        document.head.appendChild(s);
+      };
+      next();
+    });
+  }
+
+  function initRealtimeSync() {
+    // Мгновенная синхронизация между вкладками одного браузера
+    try {
+      if ("BroadcastChannel" in window) {
+        localBus = new BroadcastChannel("rassadka_bus_v4");
+        localBus.onmessage = e => applyIncomingState(e.data, false);
+      }
+    } catch (_) {}
+
+    window.addEventListener("storage", e => {
+      if (e.key === STORE && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (parsed) {
+            applyIncomingState({
+              v: 4,
+              sender: "storage",
+              ts: Date.now(),
+              ceo: parsed.ceo,
+              ceoTs: parsed.ceoTs || 0,
+              layouts: parsed.layouts || {}
+            }, false);
+          }
+        } catch (_) {}
+      }
+    });
+
+    // Мгновенная облачная синхронизация через независимые WSS MQTT-брокеры (включая порт 443)
+    const cdns = [
+      "https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js",
+      "https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.10.1/mqtt.min.js"
+    ];
+    const brokers = [
+      "wss://broker.emqx.io:8084/mqtt",
+      "wss://mqtt.eclipseprojects.io:443/mqtt",
+      "wss://broker.hivemq.com:8884/mqtt"
+    ];
+
+    loadScriptWithFallback(cdns).then(mqttLib => {
+      const topic = syncTopic();
+      brokers.forEach((brokerUrl, i) => {
+        try {
+          const cl = mqttLib.connect(brokerUrl, {
+            clientId: "rsd4_" + clientId + "_" + i,
+            clean: true,
+            keepalive: 28,
+            reconnectPeriod: 3500,
+            connectTimeout: 9000,
+            protocolVersion: 4
+          });
+          mqttClients.push(cl);
+
+          cl.on("connect", () => {
+            updateSyncIndicator(false);
+            cl.subscribe(topic, {qos: 1}, err => {
+              if (!err && !seedTimer) {
+                // Если на этом устройстве уже есть сохранённые правки, а облако пустое — отправляем их
+                seedTimer = setTimeout(() => {
+                  const hasLocalEdits = Object.values(layouts).some(x => (Number(x?.u) || 0) > 0) || ceoUpdatedAt > 0;
+                  if (!receivedCloudState && hasLocalEdits) publishNow();
+                }, 1600);
+              }
+            });
+          });
+
+          cl.on("message", (t, payload) => {
+            if (t !== topic) return;
+            try {
+              const str = typeof payload === "string" ? payload : new TextDecoder().decode(payload);
+              applyIncomingState(str, true);
+            } catch (_) {}
+          });
+
+          cl.on("close", () => updateSyncIndicator(false));
+          cl.on("offline", () => updateSyncIndicator(false));
+          cl.on("error", () => {});
+        } catch (_) {}
+      });
+    }).catch(() => updateSyncIndicator(false));
+
+    // Пробуждение на iPhone после блокировки экрана или сворачивания PWA
+    const wakeUp = () => {
+      if (document.visibilityState === "hidden") return;
+      const topic = syncTopic();
+      mqttClients.forEach(cl => {
+        try {
+          if (cl.connected) cl.subscribe(topic, {qos: 1});
+          else cl.reconnect();
+        } catch (_) {}
+      });
+      updateSyncIndicator(false);
+      refresh(false);
+    };
+    document.addEventListener("visibilitychange", wakeUp);
+    window.addEventListener("pageshow", wakeUp);
+    window.addEventListener("online", wakeUp);
+    window.addEventListener("offline", () => updateSyncIndicator(false));
+  }
+
+  /* ---------- Чтение Google Таблицы ---------- */
   function csvParse(text) {
     text = text.replace(/^\uFEFF/, "");
     const first = text.split(/\r?\n/, 1)[0] || "";
@@ -356,7 +1026,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
   function indices(rows) {
     const re = /фио\s*приглаш|ф\.?\s*и\.?\s*о\.?\s*приглаш/i;
     const headerIndex = rows.findIndex((row, i) => i < 30 && (row || []).some(x => re.test(clean(x))));
-    if (headerIndex < 0) throw Error("не найдена колонка «ФИО приглашенного».");
+    if (headerIndex < 0) throw Error("не найдена колонка «ФИО приглашенного»");
     const h = rows[headerIndex].map(x => clean(x).toLowerCase());
     const find = r => h.findIndex(x => r.test(x));
     return {
@@ -370,9 +1040,9 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
   }
 
   function sheetIdentity() {
-    const url = $("sheetUrl").value.trim() || DEFAULT_URL;
+    const url = (sheetUrl || DEFAULT_URL).trim();
     const id = (url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/) || [])[1];
-    if (!id) throw Error("укажите корректную ссылку на Google Таблицу.");
+    if (!id) throw Error("некорректная ссылка на таблицу");
     const explicitGid = (url.match(/[?&#]gid=(\d+)/) || [])[1] || null;
     return {id, gid: explicitGid || "0", explicitGid};
   }
@@ -428,7 +1098,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
 
   function readSheet() {
     const sid = sheetIdentity();
-    const key = $("apiKey").value.trim() || DEFAULT_API_KEY;
+    const key = (apiKey || DEFAULT_API_KEY).trim();
     if (!key) return readViaCsv(sid.id, sid);
     return readViaApi(sid.id, sid, key).catch(apiErr =>
       readViaCsv(sid.id, sid).then(d => { d.apiError = apiErr.message; return d; }).catch(csvErr => {
@@ -439,7 +1109,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
 
   function extract(data, sid) {
     const rows = data.rows, col = indices(rows);
-    if (col.notes < 0) throw Error("не найдена колонка «Примечания».");
+    if (col.notes < 0) throw Error("не найдена колонка «Примечания»");
     const merges = (data.merges || []).map(m => ({
       sr: m.startRowIndex || 0,
       er: Math.min(m.endRowIndex == null ? rows.length : m.endRowIndex, rows.length),
@@ -482,7 +1152,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       let mtg = result[result.length - 1];
       if (!mtg || mtg.key !== key) {
         const date = value(r, col.date), time = value(r, col.time);
-        const title = note || ("Совещание без примечания (строка " + (r + 1) + ")");
+        const title = note || ("Совещание без примечания (стр. " + (r + 1) + ")");
         const base = [sid.id, sid.gid, date, time, title].join("|");
         idCount[base] = (idCount[base] || 0) + 1;
         mtg = {id: idCount[base] > 1 ? base + "#" + idCount[base] : base, key, title, date, time, people: [], _n: {}};
@@ -495,9 +1165,15 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     return result;
   }
 
+  /* ---------- Модель данных и нумерации ---------- */
   function isCeo(p) {
     const configured = clean($("ceoName").value).toLowerCase();
     return CEO_RE.test(p.role + " " + p.name) || (configured && p.name.toLowerCase() === configured);
+  }
+
+  function displayPersonName(p, caps = false) {
+    if (isCeo(p) && p.id === "ceo") return "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР";
+    return caps ? p.name.toUpperCase() : p.name;
   }
 
   function members(m) {
@@ -513,12 +1189,13 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
 
   function layout() {
     if (!current) return null;
-    if (!layouts[current.id]) layouts[current.id] = {L: 5, R: 5, seats: {}, equipment: {}, ceoAuto: false};
+    if (!layouts[current.id]) layouts[current.id] = {L: 5, R: 5, seats: {}, equipment: {}, ceoAuto: false, u: 0};
     const l = layouts[current.id];
     l.L = clamp(l.L);
     l.R = clamp(l.R);
     l.seats = l.seats || {};
     l.equipment = l.equipment || {};
+    l.u = Number(l.u) || 0;
     const all = members(current), valid = {};
     all.forEach(p => { valid[p.id] = 1; });
     for (const seat of Object.keys(l.seats)) {
@@ -541,6 +1218,30 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     }
     return l;
   }
+
+  function computeSeatNumbers(l, all) {
+    let ceoId = null;
+    for (const p of all) { if (isCeo(p)) { ceoId = p.id; break; } }
+    let ceoSeatKey = null;
+    if (ceoId) {
+      for (const k in l.seats) { if (l.seats[k] === ceoId) { ceoSeatKey = k; break; } }
+    }
+    if (!ceoSeatKey) ceoSeatKey = "head";
+    let fromBottom = true;
+    if (ceoSeatKey !== "head") {
+      const m = /^([LR])(\d+)$/.exec(ceoSeatKey);
+      if (m) fromBottom = (Number(m[2]) + 0.5) / l[m[1]] <= 0.5;
+    }
+    const numMap = {};
+    ["L", "R"].forEach(side => {
+      const count = l[side];
+      for (let i = 0; i < count; i++) numMap[side + i] = fromBottom ? (count - i) : (i + 1);
+    });
+    numMap["head"] = fromBottom ? (Math.max(l.L, l.R) + 1) : 1;
+    return {numMap, ceoId, ceoSeatKey, fromBottom};
+  }
+
+  const sideTitle = (key, numMap) => key === "head" ? ("Глава стола · №" + numMap.head) : ((key[0] === "L" ? "Слева №" : "Справа №") + numMap[key]);
 
   function make(tag, cls, text) {
     const el = document.createElement(tag);
@@ -570,48 +1271,55 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     const sel = selected && selected.type === "device" && selected.id === d.id;
     const b = make("div", "dev" + (sel ? " selected" : ""));
     b.draggable = true;
-    b.title = d.label + " — перетащите другому участнику или обратно в список. Тап — выбрать, второй тап — снять.";
+    b.title = d.label + " — перетащите другому участнику или нажмите для управления";
     b.appendChild(document.createTextNode(d.icon));
     if (d.n) b.appendChild(make("sub", "", d.n));
     b.addEventListener("dragstart", e => { e.stopPropagation(); beginDrag(e, {type: "device", id: d.id}); });
-    b.addEventListener("click", e => { e.stopPropagation(); onDeviceBadgeClick(d.id, d.label); });
+    b.addEventListener("click", e => {
+      e.stopPropagation();
+      if (selected && selected.type === "device" && selected.id === d.id) {
+        const l = layout();
+        if (l) {
+          delete l.equipment[d.id];
+          commitLayoutChange(l);
+        }
+        selected = null;
+        render();
+        toast("Снято: " + d.label);
+      } else {
+        selected = {type: "device", id: d.id};
+        render();
+        toast(d.label + ": выберите участника или нажмите ещё раз для снятия");
+      }
+    });
     return b;
   }
 
-  function onDeviceBadgeClick(id, label) {
-    if (selected && selected.type === "device" && selected.id === id) {
-      const l = layout();
-      if (l) delete l.equipment[id];
-      selected = null;
-      render();
-      toast("Оборудование снято");
-    } else {
-      selected = {type: "device", id};
-      render();
-      toast(label + ": тапните участника для передачи или панель «Оборудование» для снятия");
-    }
-  }
-
+  /* ---------- Отрисовка интерфейса ---------- */
   function render() {
+    $("saveBtn").textContent = isMobileScreen() ? "JPEG" : "Сохранить JPEG";
+    $("zoomBtn").textContent = zoomMode === "fit" ? "🔍 Крупно" : "🔍 Вписать";
+
+    // Заголовки совещания (ПК + iPhone)
+    $("meetingTitle").textContent = current ? current.title : "Выберите совещание";
+    $("meetingMeta").textContent = current ? [current.date, current.time, current.people.length + " приглаш."].filter(Boolean).join(" · ") : "";
+    $("mobileMeetingTitle").textContent = current ? current.title : (meetings.length ? "Выберите совещание" : "Загрузка совещаний…");
+    if (current) {
+      $("mobileMeetingSub").textContent = [current.date, current.time, (current.people.length + " уч.")].filter(Boolean).join(" · ");
+    }
+
+    // Левая панель ПК
     const menu = $("meetings");
     menu.innerHTML = "";
-    if (!meetings.length) menu.appendChild(make("p", "muted", "Загрузка совещаний…"));
+    if (!meetings.length) menu.appendChild(make("p", "muted", "Загрузка списка…"));
     meetings.forEach(m => {
       const b = make("button", "meeting" + (current && current.id === m.id ? " active" : ""));
+      b.type = "button";
       b.appendChild(make("span", "mt", m.title));
       b.appendChild(make("small", "", [m.date, m.time, m.people.length + " приглаш."].filter(Boolean).join(" · ")));
       b.onclick = () => { current = m; selected = null; render(); };
       menu.appendChild(b);
     });
-
-    $("meetingTitle").textContent = current ? current.title : "Выберите совещание";
-    $("meetingMeta").textContent = current ? [current.date, current.time].filter(Boolean).join(" · ") : "";
-
-    const peopleBox = $("people"), stock = $("equipment"), stage = $("stage");
-    peopleBox.innerHTML = "";
-    stock.innerHTML = "";
-    document.body.classList.toggle("has-selected-device", !!(selected && selected.type === "device"));
-    document.body.classList.toggle("has-selected-person", !!(selected && selected.type === "person"));
 
     const l = layout();
     document.querySelectorAll("[data-side]").forEach(btn => {
@@ -621,11 +1329,26 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     $("leftCount").textContent = l ? l.L : MIN_SEATS;
     $("rightCount").textContent = l ? l.R : MIN_SEATS;
     $("resetBtn").disabled = !l;
+    $("zoomBtn").disabled = !l;
+
+    document.body.classList.toggle("has-selected-device", !!(selected && selected.type === "device"));
+    document.body.classList.toggle("has-selected-person", !!(selected && selected.type === "person"));
+
+    const peopleBox = $("people"), stock = $("equipment"), stage = $("stage");
+    peopleBox.innerHTML = "";
+    stock.innerHTML = "";
 
     if (!l) {
       $("freeCount").textContent = "";
+      $("selectionBar").classList.remove("show");
+      stage.style.width = "100%";
+      stage.style.height = "200px";
+      stage.style.transform = "none";
+      $("stageScaler").style.width = "100%";
+      $("stageScaler").style.height = "200px";
       stage.innerHTML = "";
-      stage.appendChild(make("div", "empty", "Подключение к таблице совещаний…"));
+      stage.appendChild(make("div", "empty", "Подключение к Google Таблице…"));
+      renderMobileTray(null, [], []);
       persist();
       return;
     }
@@ -633,11 +1356,27 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     const all = members(current), seated = {};
     for (const k in l.seats) seated[l.seats[k]] = 1;
     const free = all.filter(p => !seated[p.id]);
+    const freeDevices = devices.filter(d => !l.equipment[d.id]);
     $("freeCount").textContent = "(" + free.length + ")";
 
+    // Баннер выбранного элемента
+    if (selected) {
+      $("selectionBar").classList.add("show");
+      if (selected.type === "person") {
+        const sp = all.find(x => x.id === selected.id);
+        $("selectionText").textContent = sp ? ("Выбран: " + displayPersonName(sp) + " — нажмите на нужное кресло") : "Нажмите на нужное кресло";
+      } else {
+        const sd = devices.find(x => x.id === selected.id);
+        $("selectionText").textContent = sd ? (sd.icon + " " + sd.label + " — нажмите на участника") : "Нажмите на участника";
+      }
+    } else {
+      $("selectionBar").classList.remove("show");
+    }
+
+    // Правая панель ПК: Участники без места
     free.forEach(p => {
       const pCeo = isCeo(p), pPh = p.id === "ceo";
-      const item = make("div", "item" + (pCeo && pPh ? " ceo-item" : ""), (pCeo && pPh) ? "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР" : p.name);
+      const item = make("div", "item" + (pCeo && pPh ? " ceo-item" : ""), displayPersonName(p));
       if (pCeo && !pPh) item.appendChild(make("small", "ceo-role", "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР"));
       else if (p.role && !(pCeo && pPh)) item.appendChild(make("small", "", p.role));
       const owned = devices.filter(d => l.equipment[d.id] === p.id);
@@ -660,10 +1399,10 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       });
       peopleBox.appendChild(item);
     });
-    if (!free.length) peopleBox.appendChild(make("p", "", "Все участники размещены."));
+    if (!free.length) peopleBox.appendChild(make("p", "", "Все участники размещены за столом."));
 
-    devices.forEach(d => {
-      if (l.equipment[d.id]) return;
+    // Правая панель ПК: Свободное оборудование
+    freeDevices.forEach(d => {
       const item = make("div", "item", d.icon + " " + d.label);
       item.draggable = true;
       item.addEventListener("dragstart", e => beginDrag(e, {type: "device", id: d.id}));
@@ -671,32 +1410,158 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       if (selected && selected.type === "device" && selected.id === d.id) item.classList.add("selected");
       stock.appendChild(item);
     });
-    if (!stock.children.length) stock.appendChild(make("p", "", "Всё оборудование назначено."));
+    if (!freeDevices.length) stock.appendChild(make("p", "", "Всё оборудование распределено."));
 
     renderStage(stage, l, all);
+    renderMobileTray(l, all, free);
+    if (activeSheet && activeSheet.type === "chair") openChairSheet(activeSheet.seatKey);
     persist();
+  }
 
-    const sig2 = JSON.stringify([layouts, current ? current.id : null, $("ceoName").value]);
-    if (sig2 !== lastBcastSig) {
-      lastBcastSig = sig2;
-      if (!applyingRemote) broadcastState();
+  /* ---------- Нижняя панель на iPhone ---------- */
+  function renderMobileTray(l, all, free) {
+    document.querySelectorAll(".tray-tab").forEach(btn => {
+      btn.classList.toggle("active", btn.getAttribute("data-tab") === mobileTab);
+    });
+    const freeEquipCount = l ? devices.filter(d => !l.equipment[d.id]).length : devices.length;
+    $("tabPeopleCount").textContent = l ? "(" + free.length + ")" : "";
+    $("tabEquipCount").textContent = "(" + freeEquipCount + ")";
+    $("tabMeetingsCount").textContent = meetings.length ? "(" + meetings.length + ")" : "";
+
+    const box = $("trayContent");
+    box.innerHTML = "";
+    if (!l) {
+      box.appendChild(make("span", "tray-empty", "Ожидание данных таблицы…"));
+      return;
+    }
+
+    if (mobileTab === "people") {
+      if (selected && selected.type === "person") {
+        const seatedNow = Object.values(l.seats).includes(selected.id);
+        if (seatedNow) {
+          const unseatChip = make("button", "chip", "↩ Освободить стул");
+          unseatChip.type = "button";
+          unseatChip.style.borderColor = "#e0a8a8";
+          unseatChip.style.background = "#fdf1f1";
+          unseatChip.style.color = "#962828";
+          unseatChip.onclick = () => returnDrop(selected);
+          box.appendChild(unseatChip);
+        }
+      }
+      if (!free.length) {
+        box.appendChild(make("span", "tray-empty", "Все участники рассажены. Нажмите на любое кресло для изменений."));
+        return;
+      }
+      free.forEach(p => {
+        const pCeo = isCeo(p), pPh = p.id === "ceo";
+        const isSel = selected && selected.type === "person" && selected.id === p.id;
+        const chip = make("button", "chip" + (pCeo ? " ceo" : "") + (isSel ? " selected" : ""));
+        chip.type = "button";
+        const eqIcons = devices.filter(d => l.equipment[d.id] === p.id).map(d => d.icon).join("");
+        const wrap = make("span", "chip-main", (eqIcons ? eqIcons + " " : "") + displayPersonName(p));
+        if (pCeo && !pPh) wrap.appendChild(make("small", "", "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР"));
+        chip.appendChild(wrap);
+        chip.onclick = () => {
+          if (selected && selected.type === "device") assignDeviceToPerson(p.id, selected.id);
+          else {
+            selected = isSel ? null : {type: "person", id: p.id};
+            render();
+          }
+        };
+        box.appendChild(chip);
+      });
+    } else if (mobileTab === "equip") {
+      devices.forEach(d => {
+        const ownerId = l.equipment[d.id];
+        const owner = ownerId ? all.find(p => p.id === ownerId) : null;
+        const isSel = selected && selected.type === "device" && selected.id === d.id;
+        const chip = make("button", "chip" + (owner ? " assigned" : "") + (isSel ? " selected" : ""));
+        chip.type = "button";
+        const info = make("span", "chip-main", d.icon + " " + d.short);
+        info.appendChild(make("small", "", owner ? displayPersonName(owner) : "Свободно"));
+        chip.appendChild(info);
+        if (owner) {
+          const xBtn = make("span", "chip-x", "✕");
+          xBtn.onclick = e => {
+            e.stopPropagation();
+            delete l.equipment[d.id];
+            commitLayoutChange(l);
+            if (isSel) selected = null;
+            render();
+            toast("Снято: " + d.label);
+          };
+          chip.appendChild(xBtn);
+        }
+        chip.onclick = () => {
+          selected = isSel ? null : {type: "device", id: d.id};
+          render();
+        };
+        box.appendChild(chip);
+      });
+    } else {
+      meetings.forEach(m => {
+        const chip = make("button", "chip" + (current && current.id === m.id ? " selected" : ""));
+        chip.type = "button";
+        const info = make("span", "chip-main", m.title);
+        info.appendChild(make("small", "", [m.date, m.time, m.people.length + " уч."].filter(Boolean).join(" · ")));
+        chip.appendChild(info);
+        chip.onclick = () => { current = m; selected = null; render(); };
+        box.appendChild(chip);
+      });
     }
   }
 
+  /* ---------- Отрисовка стола и кресел ---------- */
   function renderStage(stage, l, all) {
     stage.innerHTML = "";
-    const sw = stage.clientWidth || 740, sh = stage.clientHeight || 640;
-    const SIDE_GAP = 52, HEAD_GAP = 48;
+    const scroller = $("stageScroll");
+    const scaler = $("stageScaler");
+    const mobile = isMobileScreen();
+    const maxSide = Math.max(l.L, l.R);
+
+    scroller.classList.toggle("zoomed", mobile && zoomMode === "zoom");
+
+    let sw, sh, scale = 1;
+    if (mobile) {
+      const vpW = Math.max(300, scroller.clientWidth - 10);
+      const vpH = Math.max(240, scroller.clientHeight - 10);
+      if (zoomMode === "fit") {
+        sw = 668;
+        const sx = vpW / sw;
+        const minLogicalH = Math.max(660, maxSide * 48 + 145);
+        sh = Math.max(minLogicalH, Math.min(1080, Math.round(vpH / sx)));
+        scale = Math.min(vpW / sw, vpH / sh);
+      } else {
+        sw = 680;
+        sh = Math.max(760, maxSide * 56 + 150);
+        scale = 0.88;
+      }
+      scaler.style.width = Math.floor(sw * scale) + "px";
+      scaler.style.height = Math.floor(sh * scale) + "px";
+      stage.style.width = sw + "px";
+      stage.style.height = sh + "px";
+      stage.style.transform = "scale(" + scale + ")";
+    } else {
+      sw = Math.max(730, scroller.clientWidth - 4);
+      sh = Math.max(580, scroller.clientHeight - 4);
+      scaler.style.width = sw + "px";
+      scaler.style.height = sh + "px";
+      stage.style.width = sw + "px";
+      stage.style.height = sh + "px";
+      stage.style.transform = "none";
+    }
+
+    const SIDE_GAP = 50, HEAD_GAP = 48;
     const headDockH = 26, headH = 44, headTop = headDockH + 4;
     const ty = headTop + headH + HEAD_GAP;
     const th = Math.max(320, sh - ty - 14), tw = th * 10.4 / 29, tx = (sw - tw) / 2;
-    const maxSide = Math.max(l.L, l.R);
     const NUM_SIZE = Math.min(40, Math.max(28, Math.floor(th / maxSide - 2)));
     const numFont = Math.round(NUM_SIZE * 0.55);
     const seatH = Math.max(32, Math.min(48, th / maxSide - 5));
     const icon = Math.max(18, Math.min(22, Math.floor((seatH - 3) / 2)));
-    const dockW = icon * 3 + 3 * 2 + 4;
-    const chairW = Math.max(110, Math.min(215, (sw - tw) / 2 - SIDE_GAP - 6 - dockW - 8));
+    const dockCols = mobile ? 2 : 3;
+    const dockW = icon * dockCols + 3 * (dockCols - 1) + 4;
+    const chairW = Math.max(112, Math.min(220, (sw - tw) / 2 - SIDE_GAP - 6 - dockW - 6));
     const hx = sw / 2 - chairW / 2;
 
     const geom = {};
@@ -710,24 +1575,9 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       }
     });
 
-    let ceoId = null;
-    for (const p of all) { if (isCeo(p)) { ceoId = p.id; break; } }
-    let ceoSeatKey = null;
-    if (ceoId) {
-      for (const k in l.seats) { if (l.seats[k] === ceoId) { ceoSeatKey = k; break; } }
-    }
-    if (!ceoSeatKey || !geom[ceoSeatKey]) ceoSeatKey = "head";
+    const {numMap, ceoId} = computeSeatNumbers(l, all);
 
-    const ceoY = geom[ceoSeatKey].cy, midY = ty + th / 2, fromBottom = ceoY <= midY;
-    const numMap = {};
-    ["L", "R"].forEach(side => {
-      const count = l[side];
-      for (let i = 0; i < count; i++) numMap[side + i] = fromBottom ? (count - i) : (i + 1);
-    });
-    numMap["head"] = fromBottom ? (maxSide + 1) : 1;
-
-    const sideName = key => key === "head" ? "Глава стола" : (key[0] === "L" ? "Слева" : "Справа");
-
+    // Стол венге
     const table = make("div", "table");
     table.style.left = tx + "px";
     table.style.top = ty + "px";
@@ -735,6 +1585,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     table.style.height = th + "px";
     stage.appendChild(table);
 
+    // Неизменные мониторы: 5 слева + 5 справа + 1 у главы
     const monitor = (px, py) => {
       const m = make("div", "monitor");
       m.style.left = px + "%";
@@ -748,27 +1599,32 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       monitor(78, py);
     }
 
-    const findP = id => { for (const p of all) if (p.id === id) return p; return null; };
+    const findP = id => all.find(p => p.id === id) || null;
 
     const addSeat = (key, x, y, w, h, label) => {
       const person = findP(l.seats[key]);
-      const seat = make("div", "seat" + (person ? " occupied" : "") + (key === "head" ? " head" : ""));
+      const isSelectedPerson = Boolean(person && selected && selected.type === "person" && selected.id === person.id);
+      const seat = make("div", "seat" + (person ? " occupied" : "") + (key === "head" ? " head" : "") + (isSelectedPerson ? " selected-seat" : ""));
       seat.style.left = x + "px";
       seat.style.top = y + "px";
       seat.style.width = w + "px";
       seat.style.height = h + "px";
+
       if (person) {
         const sCeo = isCeo(person), sPh = person.id === "ceo";
         if (sCeo && sPh) {
-          seat.appendChild(make("span", "name ceo-name", "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР"));
+          const nm = make("span", "name ceo-name", "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР");
+          if (h < 37) nm.style.fontSize = "12.5px";
+          seat.appendChild(nm);
         } else {
           const nm = make("span", "name", person.name.toUpperCase());
+          if (h < 37) nm.style.fontSize = "12.5px";
           if (sCeo) nm.style.webkitLineClamp = "1";
           seat.appendChild(nm);
           if (sCeo) seat.appendChild(make("span", "ceo-tag", "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР"));
         }
-        seat.title = (person.role ? person.name + " — " + person.role : person.name) + "\n" + sideName(key) + " №" + numMap[key];
-        seat.draggable = true;
+        seat.title = (person.role ? person.name + " — " + person.role : person.name) + "\n" + sideTitle(key, numMap);
+        seat.draggable = !mobile;
         seat.addEventListener("dragstart", e => beginDrag(e, {type: "person", id: person.id}));
       } else {
         if (key === "head") {
@@ -778,16 +1634,22 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
           seat.appendChild(make("span", "name", label));
           seat.appendChild(make("span", "tag", "свободно"));
         }
-        seat.title = sideName(key) + " №" + numMap[key] + " — свободно";
+        seat.title = sideTitle(key, numMap) + " — свободно";
       }
+
       dropTarget(seat, data => place(key, data));
       seat.tabIndex = 0;
       seat.addEventListener("click", () => {
-        if (selected) place(key, selected);
-        else if (person) { selected = {type: "person", id: person.id}; render(); toast("Выбран: " + person.name); }
-      });
-      seat.addEventListener("keydown", e => {
-        if ((e.key === "Enter" || e.key === " ") && selected) { e.preventDefault(); place(key, selected); }
+        if (selected) {
+          place(key, selected);
+        } else if (mobile) {
+          openChairSheet(key);
+        } else if (person) {
+          selected = {type: "person", id: person.id};
+          render();
+        } else {
+          openChairSheet(key);
+        }
       });
       stage.appendChild(seat);
       return person;
@@ -811,7 +1673,6 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       const val = numMap[key];
       const size = key === "head" ? 40 : NUM_SIZE;
       const nb = make("div", "seat-num" + (isCeoSeat ? " ceo" : ""), String(val));
-      nb.title = sideName(key) + " №" + val + (isCeoSeat ? " (генеральный директор)" : "");
       let nx, ny;
       if (key === "head") { nx = sw / 2; ny = (headTop + headH + ty) / 2; }
       else if (key[0] === "L") { nx = tx - SIDE_GAP / 2; ny = g.cy; }
@@ -831,16 +1692,232 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       const count = l[side];
       for (let i = 0; i < count; i++) {
         const key = side + i, g = geom[key];
-        const p = addSeat(key, g.x, g.y, chairW, seatH, sideName(key) + " №" + numMap[key]);
+        const label = (side === "L" ? "Слева №" : "Справа №") + numMap[key];
+        const p = addSeat(key, g.x, g.y, chairW, seatH, label);
         addNum(key);
         if (p) {
-          if (side === "L") addDock(key, "L", g.x - 6 - dockW, g.y, dockW, seatH, icon, p);
-          else addDock(key, "R", g.x + chairW + 6, g.y, dockW, seatH, icon, p);
+          if (side === "L") addDock(key, "L", g.x - 5 - dockW, g.y, dockW, seatH, icon, p);
+          else addDock(key, "R", g.x + chairW + 5, g.y, dockW, seatH, icon, p);
         }
       }
     });
   }
 
+  /* ---------- Шторки iOS (управление креслом, совещания, настройки) ---------- */
+  function openSheet(title, sub, meta) {
+    activeSheet = meta || {type: "custom"};
+    $("sheetTitle").textContent = title;
+    $("sheetSub").textContent = sub || "";
+    $("sheetBody").innerHTML = "";
+    $("sheetBackdrop").classList.add("open");
+    return $("sheetBody");
+  }
+
+  function closeSheet() {
+    activeSheet = null;
+    $("sheetBackdrop").classList.remove("open");
+  }
+
+  $("sheetCloseBtn").onclick = closeSheet;
+  $("sheetBackdrop").addEventListener("click", e => { if (e.target === $("sheetBackdrop")) closeSheet(); });
+
+  // Шторка быстрого управления креслом (1-тап посадка, пересадка, оборудование)
+  function openChairSheet(seatKey) {
+    const l = layout();
+    if (!l || !current) return;
+    const all = members(current);
+    const {numMap} = computeSeatNumbers(l, all);
+    const placeTitle = sideTitle(seatKey, numMap);
+    const occupant = all.find(p => p.id === l.seats[seatKey]) || null;
+
+    if (occupant) {
+      const body = openSheet(displayPersonName(occupant, true), placeTitle, {type: "chair", seatKey});
+      if (isCeo(occupant) && occupant.id !== "ceo") {
+        $("sheetSub").textContent = "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР · " + placeTitle;
+      }
+
+      const actionsRow = make("div", "sheet-actions-row");
+      const moveBtn = make("button", "sheet-btn", "⇄ Пересадить");
+      moveBtn.type = "button";
+      moveBtn.onclick = () => {
+        const pid = occupant.id;
+        closeSheet();
+        selected = {type: "person", id: pid};
+        render();
+      };
+      const freeBtn = make("button", "sheet-btn danger", "↩ Освободить стул");
+      freeBtn.type = "button";
+      freeBtn.onclick = () => {
+        delete l.seats[seatKey];
+        commitLayoutChange(l);
+        closeSheet();
+        render();
+        toast("Место освобождено");
+      };
+      actionsRow.appendChild(moveBtn);
+      actionsRow.appendChild(freeBtn);
+      body.appendChild(actionsRow);
+
+      const eqSec = make("div");
+      eqSec.appendChild(make("div", "sheet-sec-title", "Оборудование участника (нажмите для вкл/выкл)"));
+      const eqGrid = make("div", "sheet-equip-grid");
+      devices.forEach(d => {
+        const holderId = l.equipment[d.id];
+        const isMine = holderId === occupant.id;
+        const other = (!isMine && holderId) ? all.find(p => p.id === holderId) : null;
+        const btn = make("button", "equip-toggle" + (isMine ? " mine" : ""));
+        btn.type = "button";
+        btn.appendChild(make("span", "et-ic", d.icon));
+        const info = make("span", "et-info", d.short);
+        info.appendChild(make("span", "et-sub", isMine ? "✓ Закреплено" : (other ? ("У: " + displayPersonName(other)) : "Свободно")));
+        btn.appendChild(info);
+        btn.onclick = () => {
+          if (isMine) delete l.equipment[d.id];
+          else l.equipment[d.id] = occupant.id;
+          commitLayoutChange(l);
+          render();
+        };
+        eqGrid.appendChild(btn);
+      });
+      eqSec.appendChild(eqGrid);
+      body.appendChild(eqSec);
+    } else {
+      const body = openSheet(placeTitle, "Свободное место — выберите участника", {type: "chair", seatKey});
+      const seatedMap = {};
+      for (const [sk, pid] of Object.entries(l.seats)) seatedMap[pid] = sk;
+      const free = all.filter(p => !seatedMap[p.id]);
+      const seatedList = all.filter(p => seatedMap[p.id]);
+
+      const secFree = make("div");
+      secFree.appendChild(make("div", "sheet-sec-title", "Участники без места (" + free.length + ")"));
+      if (free.length) {
+        const list = make("div", "sheet-list");
+        free.forEach(p => {
+          const pCeo = isCeo(p), pPh = p.id === "ceo";
+          const btn = make("button", "sheet-person" + (pCeo ? " ceo" : ""));
+          btn.type = "button";
+          const left = make("span", "", displayPersonName(p));
+          if (pCeo && !pPh) left.appendChild(make("small", "ceo-sub", "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР"));
+          else if (p.role && !pCeo) left.appendChild(make("small", "", p.role));
+          const eqIcons = devices.filter(d => l.equipment[d.id] === p.id).map(d => d.icon).join(" ");
+          btn.appendChild(left);
+          if (eqIcons) btn.appendChild(make("span", "", eqIcons));
+          btn.onclick = () => {
+            closeSheet();
+            place(seatKey, {type: "person", id: p.id});
+          };
+          list.appendChild(btn);
+        });
+        secFree.appendChild(list);
+      } else {
+        secFree.appendChild(make("p", "muted", "Все участники уже рассажены за столом."));
+      }
+      body.appendChild(secFree);
+
+      if (seatedList.length) {
+        const secMove = make("div");
+        secMove.appendChild(make("div", "sheet-sec-title", "Пересадить сюда с другого кресла"));
+        const list = make("div", "sheet-list");
+        seatedList.forEach(p => {
+          const pCeo = isCeo(p);
+          const btn = make("button", "sheet-person" + (pCeo ? " ceo" : ""));
+          btn.type = "button";
+          const left = make("span", "", displayPersonName(p));
+          left.appendChild(make("small", "", "Сейчас: " + sideTitle(seatedMap[p.id], numMap)));
+          btn.appendChild(left);
+          btn.onclick = () => {
+            closeSheet();
+            place(seatKey, {type: "person", id: p.id});
+          };
+          list.appendChild(btn);
+        });
+        secMove.appendChild(list);
+        body.appendChild(secMove);
+      }
+    }
+  }
+
+  // Шторка выбора совещания (при нажатии на заголовок в iPhone)
+  function openMeetingsSheet() {
+    const body = openSheet("Запланированные совещания", "Обновление из Google Таблицы каждые 10 сек.", {type: "meetings"});
+    if (!meetings.length) {
+      body.appendChild(make("p", "muted", "Список совещаний пока пуст или загружается…"));
+      return;
+    }
+    const list = make("div", "sheet-list");
+    meetings.forEach(m => {
+      const b = make("button", "meeting" + (current && current.id === m.id ? " active" : ""));
+      b.type = "button";
+      b.appendChild(make("span", "mt", m.title));
+      b.appendChild(make("small", "", [m.date, m.time, m.people.length + " приглаш."].filter(Boolean).join(" · ")));
+      b.onclick = () => {
+        current = m;
+        selected = null;
+        closeSheet();
+        render();
+      };
+      list.appendChild(b);
+    });
+    body.appendChild(list);
+  }
+
+  // Шторка параметров (⚙)
+  function openSettingsSheet() {
+    const body = openSheet("Параметры приложения", $("desktopStatus").textContent, {type: "settings"});
+
+    const syncBox = make("div", "sync-info-box");
+    const onlineCount = mqttClients.filter(c => c && c.connected).length;
+    const syncText = make("span", "", "Облачная синхронизация: ");
+    const syncState = make("strong", "", onlineCount > 0 ? "Активна ⚡ (все устройства синхронизируются мгновенно)" : "Подключение к облаку…");
+    syncState.id = "settingsSyncStatus";
+    syncText.appendChild(syncState);
+    syncBox.appendChild(syncText);
+    body.appendChild(syncBox);
+
+    const ceoLabel = make("label", "settings-field", "ФИО генерального директора (если нет в таблице)");
+    const ceoInp = make("input");
+    ceoInp.value = $("ceoName").value;
+    ceoInp.onchange = () => {
+      $("ceoName").value = ceoInp.value;
+      commitCeoChange();
+      render();
+    };
+    ceoLabel.appendChild(ceoInp);
+    body.appendChild(ceoLabel);
+
+    const row = make("div", "sheet-actions-row");
+    const refB = make("button", "sheet-btn", "↻ Обновить таблицу");
+    refB.type = "button";
+    refB.onclick = () => { localCsv = false; closeSheet(); refresh(true); };
+    const csvB = make("button", "sheet-btn", "📄 Открыть CSV");
+    csvB.type = "button";
+    csvB.onclick = () => { closeSheet(); $("csvFile").click(); };
+    row.appendChild(refB);
+    row.appendChild(csvB);
+    body.appendChild(row);
+
+    const info = make("p", "muted", "Подключено автоматически к постоянной Google Таблице совещаний (актуализация каждые 10 секунд). Любые изменения рассадки мгновенно передаются на все открытые устройства.");
+    info.style.margin = "0";
+    body.appendChild(info);
+  }
+
+  $("mobileMeetingBtn").onclick = openMeetingsSheet;
+  $("settingsBtn").onclick = openSettingsSheet;
+  $("selectionCancelBtn").onclick = () => { selected = null; render(); };
+
+  document.querySelectorAll(".tray-tab").forEach(btn => {
+    btn.onclick = () => {
+      mobileTab = btn.getAttribute("data-tab");
+      render();
+    };
+  });
+
+  $("zoomBtn").onclick = () => {
+    zoomMode = zoomMode === "fit" ? "zoom" : "fit";
+    render();
+  };
+
+  /* ---------- Перетаскивание и операции рассадки ---------- */
   function beginDrag(e, data) {
     drag = data;
     try {
@@ -858,7 +1935,9 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     drag = null;
     document.body.classList.remove("drag-device");
     document.querySelectorAll(".drag-over").forEach(el => el.classList.remove("drag-over"));
-    document.querySelectorAll(".seat.occupied").forEach(s => { s.draggable = true; });
+    if (!isMobileScreen()) {
+      document.querySelectorAll(".seat.occupied").forEach(s => { s.draggable = true; });
+    }
     document.querySelectorAll("#people .item").forEach(s => { s.draggable = true; });
     if (pendingRender) { pendingRender = false; render(); }
   }
@@ -873,22 +1952,25 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     const l = layout();
     if (!l || !data) return endDrag();
     if (data.type === "person") {
-      const ok = members(current).some(p => p.id === data.id);
-      if (!ok) return endDrag();
+      if (!members(current).some(p => p.id === data.id)) return endDrag();
       let from = null;
       for (const k in l.seats) if (l.seats[k] === data.id) from = k;
       if (from !== seatKey) {
         if (from) delete l.seats[from];
         l.seats[seatKey] = data.id;
+        commitLayoutChange(l);
       }
     } else if (data.type === "device") {
       const okD = devices.some(d => d.id === data.id);
       if (!okD || !l.seats[seatKey]) {
-        status("Сначала посадите участника на стул или перетащите оборудование на ФИО в списке.", "warn");
+        toast("Сначала посадите участника на это кресло");
         return endDrag();
       }
-      l.equipment[data.id] = l.seats[seatKey];
-      toast("Оборудование назначено");
+      if (l.equipment[data.id] !== l.seats[seatKey]) {
+        l.equipment[data.id] = l.seats[seatKey];
+        commitLayoutChange(l);
+      }
+      toast("Оборудование закреплено");
     }
     selected = null;
     pendingRender = false;
@@ -902,8 +1984,11 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     if (!l) return endDrag();
     if (!devices.some(d => d.id === did)) return endDrag();
     if (!members(current).some(p => p.id === pid)) return endDrag();
-    l.equipment[did] = pid;
-    toast("Оборудование назначено");
+    if (l.equipment[did] !== pid) {
+      l.equipment[did] = pid;
+      commitLayoutChange(l);
+    }
+    toast("Оборудование закреплено");
     selected = null;
     pendingRender = false;
     drag = null;
@@ -914,10 +1999,20 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
   function returnDrop(data) {
     const l = layout();
     if (l && data) {
+      let modified = false;
       if (data.type === "person") {
-        for (const s of Object.keys(l.seats)) if (l.seats[s] === data.id) delete l.seats[s];
+        for (const s of Object.keys(l.seats)) {
+          if (l.seats[s] === data.id) {
+            delete l.seats[s];
+            modified = true;
+          }
+        }
       }
-      if (data.type === "device") delete l.equipment[data.id];
+      if (data.type === "device" && l.equipment[data.id]) {
+        delete l.equipment[data.id];
+        modified = true;
+      }
+      if (modified) commitLayoutChange(l);
     }
     selected = null;
     pendingRender = false;
@@ -930,10 +2025,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
 
   $("returnZone").addEventListener("click", () => {
     if (selected && selected.type === "person") {
-      const l = layout();
-      if (l) for (const s of Object.keys(l.seats)) if (l.seats[s] === selected.id) delete l.seats[s];
-      selected = null;
-      render();
+      returnDrop(selected);
       toast("Место освобождено");
     }
   });
@@ -943,6 +2035,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       const l = layout();
       if (l && l.equipment[selected.id]) {
         delete l.equipment[selected.id];
+        commitLayoutChange(l);
         selected = null;
         render();
         toast("Оборудование снято");
@@ -955,34 +2048,51 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       const l = layout();
       if (!l) return;
       const side = btn.getAttribute("data-side");
-      l[side] = clamp(l[side] + Number(btn.getAttribute("data-change")));
-      render();
+      const nextVal = clamp(l[side] + Number(btn.getAttribute("data-change")));
+      if (nextVal !== l[side]) {
+        l[side] = nextVal;
+        commitLayoutChange(l);
+        render();
+      }
     };
   });
 
+  // Сброс через удобную шторку (синхронизируется мгновенно на все устройства)
   $("resetBtn").onclick = () => {
     const l = layout();
     if (!l || !current) return;
-    if (!confirm("Сбросить рассадку текущего совещания?\n\n• Все участники вернутся в список\n• Оборудование вернётся на панель\n• Генеральный директор — во главу стола\n• Стулья — по 5 с каждой стороны")) return;
-    l.L = 5;
-    l.R = 5;
-    l.seats = {};
-    l.equipment = {};
-    l.ceoAuto = false;
-    selected = null;
-    render();
-    toast("Рассадка сброшена");
+    const body = openSheet("Сбросить рассадку?", current.title, {type: "reset"});
+    body.appendChild(make("p", "muted", "Все приглашённые участники вернутся в список без места, оборудование — на панель, генеральный директор займёт место во главе стола, а число стульев вернётся к 5 + 5."));
+    const row = make("div", "sheet-actions-row");
+    const cancelB = make("button", "sheet-btn", "Отмена");
+    cancelB.type = "button";
+    cancelB.onclick = closeSheet;
+    const okB = make("button", "sheet-btn danger", "Сбросить");
+    okB.type = "button";
+    okB.onclick = () => {
+      l.L = 5;
+      l.R = 5;
+      l.seats = {};
+      l.equipment = {};
+      l.ceoAuto = false;
+      layout();
+      commitLayoutChange(l);
+      selected = null;
+      closeSheet();
+      render();
+      toast("Рассадка сброшена");
+    };
+    row.appendChild(cancelB);
+    row.appendChild(okB);
+    body.appendChild(row);
   };
 
+  /* ---------- Автообновление таблицы (10 сек.) ---------- */
   function applyMeetings(list) {
     const sig = JSON.stringify(list.map(m => [m.id, m.title, m.date, m.time, m.people.map(p => p.id + "|" + p.role)]));
     const prevId = current ? current.id : null, changed = sig !== signature;
     signature = sig;
     meetings = list;
-    if (pendingRemoteMeeting) {
-      const m = meetings.filter(x => x.id === pendingRemoteMeeting)[0];
-      if (m) { current = m; pendingRemoteMeeting = null; }
-    }
     const still = meetings.some(m => current && m.id === current.id);
     if (!still) current = meetings.filter(m => m.id === prevId)[0] || meetings[0] || null;
     if (changed || ((current ? current.id : null) !== prevId)) {
@@ -993,21 +2103,20 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
   function refresh(manual) {
     if (loading || (localCsv && !manual)) return;
     loading = true;
-    if (manual) status("Загрузка таблицы…");
+    if (manual) status("Обновление…");
     readSheet().then(data => {
       applyMeetings(extract(data, safeIdentity()));
       const t = new Date().toLocaleTimeString("ru-RU");
-      if (data.exact) status("Совещаний: " + meetings.length + " · обновлено " + t);
-      else status("Совещаний: " + meetings.length + " · обновлено " + t + " (CSV)", data.apiError ? "warn" : "good");
+      if (data.exact) status("Совещаний: " + meetings.length + " · " + t, "good");
+      else status("Совещаний: " + meetings.length + " · " + t + " (CSV)", data.apiError ? "warn" : "good");
       loading = false;
     }).catch(e => {
-      status("Ошибка загрузки: " + e.message, "bad");
+      status("Ошибка сети: " + e.message, "bad");
       loading = false;
     });
   }
 
-  $("refreshBtn").onclick = () => { localCsv = false; persist(); refresh(true); };
-  $("csvBtn").onclick = () => $("csvFile").click();
+  $("refreshBtn").onclick = () => { localCsv = false; refresh(true); toast("Обновление данных…"); };
   $("csvFile").onchange = e => {
     const file = e.target.files ? e.target.files[0] : null;
     if (!file) return;
@@ -1015,189 +2124,20 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       const list = extract({rows: csvParse(txt), merges: [], exact: false}, safeIdentity());
       localCsv = true;
       applyMeetings(list);
-      status("Импортировано из CSV: " + meetings.length + ". Для автообновления нажмите «Обновить».");
+      status("CSV: " + meetings.length + " совещ.", "warn");
+      toast("CSV загружен");
     }).catch(err => status("Ошибка CSV: " + err.message, "bad"));
     e.target.value = "";
   };
-  $("apiKey").onchange = () => { persist(); refresh(true); };
-  $("sheetUrl").onchange = () => { persist(); refresh(true); };
-  $("ceoName").onchange = () => { persist(); render(); };
+  $("ceoName").onchange = () => { commitCeoChange(); render(); };
 
   let rz = 0;
   window.addEventListener("resize", () => {
     cancelAnimationFrame(rz);
-    rz = requestAnimationFrame(() => { if (current && !drag) render(); });
+    rz = requestAnimationFrame(() => { if (!drag) render(); });
   });
 
-  /* --- Синхронизация ПК <-> iPhone (PeerJS) --- */
-  function deviceNameVal() { return clean($("deviceName").value) || "Устройство"; }
-  function currentStateMsg() {
-    return {
-      type: "state",
-      from: senderId,
-      fromName: deviceNameVal(),
-      ts: Date.now(),
-      code: syncCode,
-      layouts,
-      currentId: current ? current.id : null,
-      ceo: $("ceoName").value
-    };
-  }
-  function broadcastState() {
-    if (!syncEnabled) return;
-    clearTimeout(bcastTimer);
-    bcastTimer = setTimeout(sendStateToAll, 300);
-  }
-  function sendStateToAll() {
-    if (!syncEnabled || !conns.length) return;
-    const open = conns.filter(c => { try { return c.open; } catch (_) { return false; } });
-    if (!open.length) return;
-    const msg = currentStateMsg();
-    lastSyncTs = msg.ts;
-    open.forEach(c => { try { c.send(msg); } catch (_) {} });
-  }
-  function sendStateToConn(conn) {
-    if (!syncEnabled) return;
-    const msg = currentStateMsg();
-    lastSyncTs = msg.ts;
-    try {
-      if (conn.open) conn.send(msg);
-      else conn.on("open", () => { try { conn.send(currentStateMsg()); } catch (_) {} });
-    } catch (_) {}
-  }
-  function onSyncData(msg, fromConn) {
-    if (!msg || msg.type !== "state" || msg.from === senderId) return;
-    lastSyncTs = msg.ts || Date.now();
-    applyingRemote = true;
-    try {
-      if (msg.layouts && typeof msg.layouts === "object") layouts = msg.layouts;
-      if (typeof msg.ceo === "string") $("ceoName").value = msg.ceo;
-      if (msg.currentId) {
-        const m = meetings.filter(x => x.id === msg.currentId)[0];
-        if (m) current = m; else pendingRemoteMeeting = msg.currentId;
-      }
-      selected = null;
-      render();
-      toast("↔ Изменения с «" + (msg.fromName || "другого устройства") + "»");
-    } finally {
-      applyingRemote = false;
-    }
-    if (peerMode === "host" && fromConn) {
-      conns.forEach(c => { if (c !== fromConn) { try { if (c.open) c.send(msg); } catch (_) {} } });
-    }
-  }
-  function updateSyncCount() {
-    const n = conns.filter(c => { try { return c.open; } catch (_) { return false; } }).length;
-    if (peerMode === "host") setSyncStatus("Код " + syncCode + " · подкл.: " + n, "ok");
-    else if (n > 0) setSyncStatus("Подключено (" + syncCode + ")", "ok");
-  }
-  function loadPeerJS() {
-    return new Promise((res, rej) => {
-      if (window.Peer) return res();
-      const s = document.createElement("script");
-      s.src = "https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js";
-      s.onload = () => { if (window.Peer) res(); else rej(new Error("PeerJS не загрузился")); };
-      s.onerror = () => rej(new Error("не удалось загрузить PeerJS (нужен интернет)"));
-      document.head.appendChild(s);
-    });
-  }
-  function peerIdFor(code) { return "rassadka2026-" + String(code).trim(); }
-  function showQR(code) {
-    $("qrWrap").hidden = false;
-    $("qrCodeBig").textContent = code;
-    $("qrImg").src = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" + encodeURIComponent("РАССАДКА:" + code);
-  }
-  function hideQR() { $("qrWrap").hidden = true; }
-  function addConn(conn) {
-    conns.push(conn);
-    conn.on("open", () => { updateSyncCount(); if (peerMode === "host") sendStateToConn(conn); });
-    conn.on("data", msg => onSyncData(msg, conn));
-    const rm = () => { conns = conns.filter(c => c !== conn); if (syncEnabled) updateSyncCount(); };
-    conn.on("close", rm);
-    conn.on("error", () => {});
-  }
-  function stopSync(silent) {
-    try { conns.forEach(c => { try { c.close(); } catch (_) {} }); } catch (_) {}
-    conns = [];
-    try { if (peer) peer.destroy(); } catch (_) {}
-    peer = null;
-    peerMode = "";
-    syncEnabled = false;
-    hideQR();
-    if (!silent) {
-      setSyncStatus("Синхр. выкл.");
-      $("syncOffBtn").disabled = true;
-      $("syncBtn").disabled = false;
-    }
-  }
-  function startSync(code) {
-    code = String(code || "").trim();
-    if (!code) { setSyncStatus("Введите код", "err"); return; }
-    setSyncStatus("Подключение…");
-    $("syncBtn").disabled = true;
-    loadPeerJS().then(() => {
-      stopSync(true);
-      syncCode = code;
-      lastSyncTs = Date.now();
-      const hostId = peerIdFor(code);
-      let isHost = true;
-      const p = new Peer(hostId);
-      peer = p;
-      p.on("open", () => {
-        if (!isHost) return;
-        peerMode = "host";
-        syncEnabled = true;
-        setSyncStatus("Код " + code + ": ожидание…", "ok");
-        $("syncOffBtn").disabled = false;
-        $("syncBtn").disabled = false;
-        showQR(code);
-        toast("Синхронизация: код " + code);
-      });
-      p.on("connection", conn => addConn(conn));
-      p.on("error", err => {
-        if (err && err.type === "unavailable-id" && isHost) {
-          isHost = false;
-          try { p.destroy(); } catch (_) {}
-          const cp = new Peer();
-          peer = cp;
-          cp.on("open", () => {
-            peerMode = "client";
-            syncEnabled = true;
-            const conn = cp.connect(hostId, {reliable: true});
-            addConn(conn);
-            setSyncStatus("Подключено (" + code + ")", "ok");
-            $("syncOffBtn").disabled = false;
-            $("syncBtn").disabled = false;
-            hideQR();
-          });
-          cp.on("error", e2 => {
-            setSyncStatus("Ошибка: " + ((e2 && e2.message) || (e2 && e2.type) || "сеть"), "err");
-            $("syncBtn").disabled = false;
-          });
-        } else if (err && (err.type === "peer-unavailable" || err.type === "network" || err.type === "server-error" || err.type === "socket-error")) {
-          setSyncStatus("Нет связи с сервером синхронизации", "err");
-          $("syncBtn").disabled = false;
-        }
-      });
-      p.on("disconnected", () => { try { p.reconnect(); } catch (_) {} });
-    }).catch(e => {
-      setSyncStatus("Ошибка: " + e.message, "err");
-      $("syncBtn").disabled = false;
-    });
-  }
-  $("syncBtn").onclick = () => { persist(); startSync($("syncCode").value); };
-  $("syncNewBtn").onclick = () => {
-    const c = String(Math.floor(100000 + Math.random() * 900000));
-    $("syncCode").value = c;
-    persist();
-    startSync(c);
-  };
-  $("syncOffBtn").onclick = () => stopSync(false);
-  $("deviceName").onchange = persist;
-  $("syncCode").onchange = persist;
-  window.addEventListener("beforeunload", () => { try { if (peer) peer.destroy(); } catch (_) {} });
-
-  /* --- Печать A4 / Сохранение JPEG (крупная нумерация мест + ФИО капсом и крупнее) --- */
+  /* ---------- Формирование JPEG и Печать A4 (для ПК) ---------- */
   function rr(c, x, y, w, h, r) {
     c.beginPath();
     if (c.roundRect) c.roundRect(x, y, w, h, r); else c.rect(x, y, w, h);
@@ -1206,7 +2146,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
   function image() {
     if (!current) throw Error("Сначала выберите совещание.");
     const l = layout(), people = members(current), W = 1400, H = 1980;
-    const FONT = "system-ui, 'Segoe UI', Arial, sans-serif";
+    const FONT = "-apple-system, system-ui, 'Segoe UI', Arial, sans-serif";
     const canvas = document.createElement("canvas");
     canvas.width = W;
     canvas.height = H;
@@ -1275,7 +2215,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       monitor(x + w - 70, my);
     }
 
-    // Значки оборудования с внешней от стола стороны
+    // Оборудование с внешней стороны кресел
     const badge = (d, bx, by, s) => {
       c.fillStyle = "#fffdf7";
       c.strokeStyle = "#c3a873";
@@ -1316,8 +2256,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     };
 
     const chair = (key, cx, cy, cw, ch, cap) => {
-      let p = null;
-      people.forEach(pp => { if (pp.id === l.seats[key]) p = pp; });
+      const p = people.find(pp => pp.id === l.seats[key]) || null;
       c.fillStyle = p ? "#e4f1e7" : "#e3e6e4";
       c.strokeStyle = key === "head" ? "#b99a62" : (p ? "#759781" : "#a7aeaa");
       c.lineWidth = 3;
@@ -1353,31 +2292,10 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       return p;
     };
 
-    // Расчёт параллельной нумерации мест (увеличенный в 2 раза диаметр 56px)
-    const cyOfImg = key => {
-      if (key === "head") return 243;
-      const m = /^([LR])(\d+)$/.exec(key || "");
-      if (!m) return 243;
-      const cnt = l[m[1]];
-      return y + (Number(m[2]) + 0.5) * h / cnt;
-    };
-    let ceoIdImg = null;
-    for (const pp of people) { if (isCeo(pp)) { ceoIdImg = pp.id; break; } }
-    let ceoSeatImg = null;
-    if (ceoIdImg) {
-      for (const k in l.seats) { if (l.seats[k] === ceoIdImg) { ceoSeatImg = k; break; } }
-    }
-    if (!ceoSeatImg) ceoSeatImg = "head";
-    const fromBottomImg = cyOfImg(ceoSeatImg) <= y + h / 2;
-    const numImg = {};
-    ["L", "R"].forEach(side => {
-      const count = l[side];
-      for (let i = 0; i < count; i++) numImg[side + i] = fromBottomImg ? (count - i) : (i + 1);
-    });
-    numImg["head"] = fromBottomImg ? (Math.max(l.L, l.R) + 1) : 1;
-
+    // Параллельная крупная (×2, диаметр 56px) нумерация мест
+    const {numMap: numImg, ceoId: ceoIdImg} = computeSeatNumbers(l, people);
     const drawNum = (nx, ny, num, isCeoSeat) => {
-      const rad = 28; // диаметр 56px (в 2 раза крупнее стандартного)
+      const rad = 28;
       c.save();
       c.beginPath();
       c.arc(nx, ny, rad, 0, Math.PI * 2);
@@ -1396,12 +2314,10 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       c.textBaseline = "alphabetic";
     };
 
-    // Глава стола и номер между ним и столом
     const hp = chair("head", 555, 202, 290, 82, "СВОБОДНО");
     drawNum(700, 322, numImg["head"], Boolean(ceoIdImg && l.seats["head"] === ceoIdImg));
     if (hp) dock(hp.id, "H", 700, 194);
 
-    // Боковые ряды кресел и номера между креслами и краем стола
     ["L", "R"].forEach(side => {
       const count = l[side], left = side === "L", ch = Math.min(76, h / count - 12);
       for (let i = 0; i < count; i++) {
@@ -1423,15 +2339,40 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     return canvas.toDataURL("image/jpeg", 0.94);
   }
 
+  function dataUrlToFile(dataUrl, filename) {
+    const parts = dataUrl.split(",");
+    const mime = (parts[0].match(/:(.*?);/) || [])[1] || "image/jpeg";
+    const bin = atob(parts[1]);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new File([arr], filename, {type: mime});
+  }
+
+  function downloadDataUrl(dataUrl, filename) {
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
   $("saveBtn").onclick = () => {
     try {
-      const a = document.createElement("a");
-      a.href = image();
-      a.download = "схема-рассадки.jpg";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    } catch (e) { status(e.message, "bad"); }
+      const dataUrl = image();
+      const filename = "схема-рассадки.jpg";
+      // На iPhone открываем системное меню iOS «Поделиться / Сохранить в Фото»
+      if ((isIOS() || isMobileScreen()) && navigator.canShare && navigator.share) {
+        const file = dataUrlToFile(dataUrl, filename);
+        if (navigator.canShare({files: [file]})) {
+          navigator.share({files: [file], title: current ? current.title : "Схема рассадки"}).catch(err => {
+            if (err && err.name !== "AbortError") downloadDataUrl(dataUrl, filename);
+          });
+          return;
+        }
+      }
+      downloadDataUrl(dataUrl, filename);
+    } catch (e) { toast(e.message); }
   };
 
   $("printBtn").onclick = () => {
@@ -1441,7 +2382,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       img.src = image();
       $("printArea").innerHTML = "";
       $("printArea").appendChild(img);
-    } catch (e) { status(e.message, "bad"); }
+    } catch (e) { toast(e.message); }
   };
 
   try {
@@ -1449,8 +2390,9 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       name: "Схема рассадки",
       short_name: "Рассадка",
       display: "standalone",
+      orientation: "portrait",
       start_url: ".",
-      background_color: "#eef1ee",
+      background_color: "#eef2ef",
       theme_color: "#183c34"
     };
     const blob = new Blob([JSON.stringify(man)], {type: "application/json"});
@@ -1461,6 +2403,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
   } catch (_) {}
 
   render();
+  initRealtimeSync();
   refresh(true);
   setInterval(refresh, REFRESH_MS);
 })();
