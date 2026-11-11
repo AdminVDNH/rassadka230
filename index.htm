@@ -77,8 +77,8 @@ body.dragging-person #stageScroll { overflow: hidden; }
   background: #e4f1e6; border: 2px solid #769f80; border-radius: 11px;
   box-shadow: 0 10px 26px #1f33204d, inset 0 -5px 0 #c9cfcb;
   display: flex; align-items: center; justify-content: center; text-align: center;
-  padding: 4px 10px; color: #29372f; font-weight: 800; text-transform: uppercase;
-  font-size: 13px; line-height: 1.1; overflow: hidden;
+  padding: 4px 10px; color: #29372f; font-weight: 750; text-transform: uppercase;
+  font-size: 11.5px; line-height: 1.15; overflow: hidden; overflow-wrap: break-word; word-break: normal; hyphens: none; -webkit-hyphens: none;
 }
 .drag-clone.ceo { color: var(--danger); border-color: #e5a3a3; background: #fdf0f0; }
 .drop-return.ptr-over, #people.ptr-over { background: #e7f2e7; outline: 2px solid #d09b48; }
@@ -179,7 +179,7 @@ main {
 
 .meeting {
   width: 100%; text-align: left; border: 1px solid #e0e8e1; border-radius: 11px;
-  background: #f8faf8; padding: 9px 10px; color: #24382e; overflow-wrap: anywhere; transition: background .15s;
+  background: #f8faf8; padding: 9px 10px; color: #24382e; overflow-wrap: break-word; word-break: normal; hyphens: none; -webkit-hyphens: none; transition: background .15s;
 }
 .meeting .mt { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-weight: 600; font-size: 13px; }
 .meeting.active { background: #e5f2e7; border-color: #6c9f7b; }
@@ -250,9 +250,9 @@ main {
 
 .seat {
   position: absolute; border: 1px solid #a5ada9; border-radius: 11px; background: #e5e7e6;
-  box-shadow: inset 0 -5px 0 #c9cfcb, 0 3px 6px #1f33201a; padding: 3px 7px 6px;
+  box-shadow: inset 0 -5px 0 #c9cfcb, 0 3px 6px #1f33201a; padding: 4px 9px 6px;
   text-align: center; color: #29372f; display: flex; align-items: center; justify-content: center;
-  flex-direction: column; overflow: hidden; line-height: 1.1; cursor: pointer;
+  flex-direction: column; overflow: hidden; line-height: 1.15; cursor: pointer;
   transition: transform .1s, outline-color .15s;
 }
 .seat:active { transform: scale(0.98); }
@@ -262,12 +262,15 @@ main {
 .seat.occupied:active { cursor: grabbing; }
 .seat.drag-over, .seat.selected-seat { outline: 3px solid #d09b48; }
 .seat .name {
-  font-size: 11.5px; font-weight: 700; width: 100%; overflow: hidden; overflow-wrap: anywhere;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  font-size: 10px; font-weight: 650; width: 100%; overflow: hidden;
+  /* Перенос только по словам, целиком: без дефиса и без разрыва по буквам */
+  overflow-wrap: break-word; word-break: normal; hyphens: none; -webkit-hyphens: none;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+  line-height: 1.15; letter-spacing: .1px; text-wrap: balance;
 }
-/* Посаженные ФИО: CAPSLOCK, bold, на 2 кегля крупнее */
-.seat.occupied .name { font-size: 14.5px; font-weight: 800; text-transform: uppercase; line-height: 1.07; }
-.seat .tag { color: #6e7d75; font-size: 10px; }
+/* Посаженные ФИО: CAPSLOCK, bold, мельче, на широкой плашке — полностью видны */
+.seat.occupied .name { font-size: 12px; font-weight: 750; text-transform: uppercase; line-height: 1.15; hyphens: none; -webkit-hyphens: none; }
+.seat .tag { color: #6e7d75; font-size: 9.5px; margin-top: 1px; }
 .seat .name.ceo-name { color: var(--danger); }
 .seat .ceo-tag { color: var(--danger); font-size: 9.5px; font-weight: 800; letter-spacing: .25px; margin-top: 1px; }
 
@@ -305,9 +308,9 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
 /* Элементы правой панели (ПК) */
 .item {
   border: 1px solid #d8e2d9; border-radius: 10px; padding: 8px 10px; background: #f8faf8;
-  font-size: 13px; overflow-wrap: anywhere; cursor: grab;
+  font-size: 13px; overflow-wrap: break-word; word-break: normal; hyphens: none; -webkit-hyphens: none; cursor: grab;
 }
-.item small { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
+.item small { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; overflow-wrap: break-word; word-break: normal; hyphens: none; -webkit-hyphens: none; }
 .item small.ceo-role { color: var(--danger); font-weight: 800; }
 .item.ceo-item { color: var(--danger); font-weight: 800; border-color: #e5a3a3; background: #fdf0f0; }
 .item.selected { outline: 2.5px solid #d09b48; background: #fff9ec; }
@@ -1260,17 +1263,19 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       stage.style.transform = "none";
     }
 
-    const SIDE_GAP = 50, HEAD_GAP = 48;
+    const SIDE_GAP = 34, HEAD_GAP = 48;
     const headDockH = 26, headH = 44, headTop = headDockH + 4;
     const ty = headTop + headH + HEAD_GAP;
-    const th = Math.max(320, sh - ty - 14), tw = th * 10.4 / 29, tx = (sw - tw) / 2;
-    const NUM_SIZE = Math.min(40, Math.max(28, Math.floor(th / maxSide - 2)));
+    // Стол чуть уже (9.2 вместо 10.4), чтобы плашки с ФИО стали шире и ФИО помещались целиком
+    const th = Math.max(320, sh - ty - 14), tw = th * 9.2 / 29, tx = (sw - tw) / 2;
+    const NUM_SIZE = Math.min(30, Math.max(24, Math.floor(th / maxSide - 2)));
     const numFont = Math.round(NUM_SIZE * 0.55);
-    const seatH = Math.max(32, Math.min(48, th / maxSide - 5));
-    const icon = Math.max(18, Math.min(22, Math.floor((seatH - 3) / 2)));
+    const seatH = Math.max(36, Math.min(54, th / maxSide - 4));
+    const icon = Math.max(16, Math.min(19, Math.floor((seatH - 3) / 2)));
     const dockCols = mobile ? 2 : 3;
     const dockW = icon * dockCols + 3 * (dockCols - 1) + 4;
-    const chairW = Math.max(112, Math.min(220, (sw - tw) / 2 - SIDE_GAP - 6 - dockW - 6));
+    // Широкие плашки: кресло занимает почти всё свободное место до края сцены
+    const chairW = Math.max(135, Math.min(290, (sw - tw) / 2 - SIDE_GAP - 4 - dockW - 4));
     const hx = sw / 2 - chairW / 2;
 
     const geom = {};
@@ -1322,17 +1327,18 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       seat.style.width = w + "px";
       seat.style.height = h + "px";
 
+      let nameEl = null;
       if (person) {
         const sCeo = isCeo(person), sPh = person.id === "ceo";
         if (sCeo && sPh) {
-          const nm = make("span", "name ceo-name", "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР");
-          if (h < 37) nm.style.fontSize = "12.5px";
-          seat.appendChild(nm);
+          nameEl = make("span", "name ceo-name", "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР");
+          nameEl.style.webkitLineClamp = "2";
+          seat.appendChild(nameEl);
         } else {
-          const nm = make("span", "name", person.name.toUpperCase());
-          if (h < 37) nm.style.fontSize = "12.5px";
-          if (sCeo) nm.style.webkitLineClamp = "1";
-          seat.appendChild(nm);
+          nameEl = make("span", "name", person.name.toUpperCase());
+          // У ГД под ФИО ещё плашка должности — оставляем 2 строки, у остальных до 3, чтобы ФИО было видно полностью
+          nameEl.style.webkitLineClamp = sCeo ? "2" : "3";
+          seat.appendChild(nameEl);
           if (sCeo) seat.appendChild(make("span", "ceo-tag", "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР"));
         }
         seat.title = (person.role ? person.name + " — " + person.role : person.name) + "\n" + sideTitle(key, numMap) + "\nПеретащите пальцем/мышью вдоль стороны или на другую сторону";
@@ -1369,6 +1375,17 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
         }
       });
       stage.appendChild(seat);
+      // Автоподбор: если ФИО не помещается целиком (перенос только по словам, без дефиса) — уменьшаем кегль
+      if (nameEl) {
+        let fs = 12;
+        nameEl.style.fontSize = fs + "px";
+        for (let k = 0; k < 8; k++) {
+          const over = nameEl.scrollHeight > nameEl.clientHeight + 1 || seat.scrollHeight > seat.clientHeight + 1;
+          if (!over || fs <= 8.5) break;
+          fs -= 0.5;
+          nameEl.style.fontSize = fs + "px";
+        }
+      }
       return person;
     };
 
@@ -2187,8 +2204,8 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     c.font = "22px " + FONT;
     c.fillText([current.date, current.time].filter(Boolean).join(" · "), 70, 146);
 
-    // Стол венге
-    const x = 545, y = 360, w = 310, h = 1390;
+    // Стол венге (чуть уже, чтобы плашки с ФИО были шире и ФИО помещались целиком)
+    const x = 565, y = 360, w = 270, h = 1390;
     const wood = c.createLinearGradient(x, 0, x + w, 0);
     wood.addColorStop(0, "#38271e");
     wood.addColorStop(0.25, "#674529");
@@ -2273,23 +2290,39 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       c.stroke();
       if (p) {
         const pCeo = isCeo(p), pPh = p.id === "ceo";
+        // Перенос только по словам (wrap режет по пробелам), без дефиса; кегль уменьшаем, пока ФИО не поместится целиком
+        const fitLines = (text, maxLines, startPx) => {
+          let px = startPx, lines = [];
+          while (px >= 13) {
+            c.font = "bold " + px + "px " + FONT;
+            lines = wrap(text, cw - 24, maxLines);
+            const joined = lines.join(" ");
+            const full = text.split(/\s+/).join(" ");
+            if (joined.replace(/…/g, "").trim() === full || lines.length < maxLines) break;
+            px -= 1;
+          }
+          return {lines, px};
+        };
         if (pCeo && pPh) {
-          c.font = "bold 24px " + FONT;
           c.fillStyle = "#c81e1e";
-          const lines = wrap("ГЕНЕРАЛЬНЫЙ ДИРЕКТОР", cw - 24, 2), lh = 28;
+          const {lines, px} = fitLines("ГЕНЕРАЛЬНЫЙ ДИРЕКТОР", 2, 20);
+          c.font = "bold " + px + "px " + FONT;
+          const lh = px + 4;
           lines.forEach((line, i) => c.fillText(line, cx + 12, cy + ch / 2 - lines.length * lh / 2 + lh * (i + 1) - 6));
         } else if (pCeo) {
-          c.font = "bold 24px " + FONT;
           c.fillStyle = "#24352a";
-          const lines = wrap(p.name.toUpperCase(), cw - 24, 1), lh = 28;
-          lines.forEach((line, i) => c.fillText(line, cx + 12, cy + ch / 2 - 22 + lh * (i + 1) - 6));
-          c.font = "bold 15px " + FONT;
+          const {lines, px} = fitLines(p.name.toUpperCase(), 2, 20);
+          c.font = "bold " + px + "px " + FONT;
+          const lh = px + 4;
+          lines.forEach((line, i) => c.fillText(line, cx + 12, cy + ch / 2 - 20 + lh * (i + 1) - 6));
+          c.font = "bold 13px " + FONT;
           c.fillStyle = "#c81e1e";
-          c.fillText("ГЕНЕРАЛЬНЫЙ ДИРЕКТОР", cx + 12, cy + ch / 2 + 22);
+          c.fillText("ГЕНЕРАЛЬНЫЙ ДИРЕКТОР", cx + 12, cy + ch / 2 + 20);
         } else {
-          c.font = "bold 24px " + FONT;
           c.fillStyle = "#24352a";
-          const lines = wrap(p.name.toUpperCase(), cw - 24, 2), lh = 28;
+          const {lines, px} = fitLines(p.name.toUpperCase(), 3, 20);
+          c.font = "bold " + px + "px " + FONT;
+          const lh = px + 4;
           lines.forEach((line, i) => c.fillText(line, cx + 12, cy + ch / 2 - lines.length * lh / 2 + lh * (i + 1) - 6));
         }
       } else {
@@ -2322,7 +2355,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       c.textBaseline = "alphabetic";
     };
 
-    const hp = chair("head", 555, 202, 290, 82, "СВОБОДНО");
+    const hp = chair("head", 510, 202, 380, 82, "СВОБОДНО");
     drawNum(700, 322, numImg["head"], Boolean(ceoIdImg && l.seats["head"] === ceoIdImg));
     if (hp) dock(hp.id, "H", 700, 194);
 
@@ -2330,12 +2363,12 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       const count = l[side], left = side === "L", ch = Math.min(76, h / count - 12);
       for (let i = 0; i < count; i++) {
         const cy = y + (i + 0.5) * h / count;
-        const cx = left ? 140 : 931, cw = 329;
+        const cx = left ? 95 : 905, cw = 380;
         const key = side + i;
         const p = chair(key, cx, cy - ch / 2, cw, ch, "Свободно");
         const nx = left ? (cx + cw + x) / 2 : (x + w + cx) / 2;
         drawNum(nx, cy, numImg[key], Boolean(ceoIdImg && l.seats[key] === ceoIdImg));
-        if (p) dock(p.id, side, left ? 132 : 1268, cy);
+        if (p) dock(p.id, side, left ? 87 : 1293, cy);
       }
     });
 
@@ -2416,5 +2449,5 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
   setInterval(refresh, REFRESH_MS);
 })();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58b7e17cd34ec67',t:'MTc5NDM4MTE4Nw=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58b7e17cd34ec67',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58c11f87dadf123',t:'MTc5NDM4NzI0NA=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58c11f87dadf123',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
