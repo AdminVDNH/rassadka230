@@ -62,6 +62,42 @@ html, body { margin: 0; padding: 0; overscroll-behavior-y: none; }
 button, input { font: inherit; }
 button { cursor: pointer; user-select: none; -webkit-user-select: none; }
 .seat, .item, .dev, .meeting, .chip { touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+/* Перетаскивание пальцем/мышью (Pointer Events): кресла с участниками и карточки участников */
+.seat.occupied, .item[data-person], .chip[data-person] { touch-action: none; cursor: grab; }
+.seat.occupied:active, .item[data-person]:active, .chip[data-person]:active { cursor: grabbing; }
+.seat { transition: transform .18s ease, outline-color .15s, opacity .15s; will-change: transform; }
+.seat.drag-origin { opacity: .32; outline: 2px dashed #7ba685; }
+.seat.drag-target { outline: 3px solid #d09b48 !important; box-shadow: 0 0 0 4px #d09b4833, 0 6px 14px #1f33202e; }
+body.dragging-person { cursor: grabbing !important; }
+body.dragging-person * { cursor: grabbing !important; }
+body.dragging-person #stageScroll { overflow: hidden; }
+.drag-clone {
+  position: fixed; left: 0; top: 0; z-index: 9999; pointer-events: none;
+  transform: translate(-50%, -50%) scale(1.04);
+  background: #e4f1e6; border: 2px solid #769f80; border-radius: 11px;
+  box-shadow: 0 10px 26px #1f33204d, inset 0 -5px 0 #c9cfcb;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  padding: 4px 10px; color: #29372f; font-weight: 800; text-transform: uppercase;
+  font-size: 13px; line-height: 1.1; overflow: hidden;
+}
+.drag-clone.ceo { color: var(--danger); border-color: #e5a3a3; background: #fdf0f0; }
+.drop-return.ptr-over, #people.ptr-over { background: #e7f2e7; outline: 2px solid #d09b48; }
+#trayContent.ptr-over { background: #e7f2e7; border-radius: 10px; outline: 2px dashed #7ba685; }
+/* Режим редактора (код 1996) / режим просмотра */
+#editorBtn.editor-on { background: #d7b478; color: #232119; border-color: #d7b478; }
+#editorBadge {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 800;
+  padding: 2px 8px; border-radius: 99px; background: #ffffff22; color: #c4ddd1; border: 1px solid #ffffff2e;
+}
+#editorBadge.on { background: #d7b478; color: #232119; border-color: #d7b478; }
+body.view-mode .seat.occupied { cursor: default; touch-action: manipulation; }
+body.view-mode .seat { cursor: default; }
+body.view-mode .item[data-person], body.view-mode .chip[data-person] { cursor: default; touch-action: manipulation; }
+body.view-mode #resetBtn { display: none !important; }
+body.view-mode .counter button { opacity: .35; pointer-events: none; }
+body.view-mode .desktop-panel .item { opacity: .85; }
+.editor-code-input { width: 100%; padding: 12px; border: 1.5px solid #cbd7cd; border-radius: 11px; font-size: 20px; text-align: center; letter-spacing: 6px; font-weight: 800; }
+.editor-code-input.err { border-color: var(--danger); background: #fdf1f1; }
 
 /* Верхняя шапка */
 header {
@@ -78,18 +114,10 @@ header {
 }
 .brand-block { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .brand-title h1 { margin: 0; font-size: 19px; letter-spacing: -0.2px; }
-.status-line { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: #c4ddd1; margin-top: 2px; flex-wrap: wrap; }
+.status-line { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #c4ddd1; margin-top: 2px; }
 .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #4cd97b; flex: 0 0 auto; }
 .live-dot.warn { background: #f2b84b; }
 .live-dot.bad { background: #ff6b6b; }
-.sync-pill {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 1px 7px; border-radius: 99px; font-size: 10.5px; font-weight: 700;
-  background: #ffffff1a; color: #d8ece2; border: 1px solid #ffffff24;
-  transition: background .2s, color .2s, transform .2s;
-}
-.sync-pill.online { background: #27674980; color: #9bf6be; border-color: #4cd97b55; }
-.sync-pill.pulse { transform: scale(1.06); background: #d7b47855; color: #fff; }
 
 /* Кнопка выбора совещания на мобильном */
 #mobileMeetingBtn {
@@ -113,9 +141,6 @@ header {
 #mobileMeetingBtn .mm-sub {
   font-size: 11px; color: #c8e0d4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 5px; margin-top: 1px;
 }
-#mobileSyncDot { font-size: 11px; opacity: 0.45; transition: opacity .2s, transform .2s; }
-#mobileSyncDot.online { opacity: 1; color: #7ef2a6; }
-#mobileSyncDot.pulse { transform: scale(1.3); color: var(--gold); }
 #mobileMeetingBtn .mm-arrow { font-size: 13px; color: var(--gold); flex: 0 0 auto; font-weight: 800; }
 
 .actions { display: flex; align-items: center; gap: 7px; flex: 0 0 auto; }
@@ -366,10 +391,6 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
 .settings-field input {
   width: 100%; padding: 10px 11px; border: 1px solid #cbd7cd; border-radius: 10px; font-size: 16px;
 }
-.sync-info-box {
-  padding: 10px 12px; border-radius: 11px; background: #eff6f1; border: 1px solid #cde0d3;
-  font-size: 12.5px; color: #204231; display: flex; align-items: center; justify-content: space-between; gap: 8px;
-}
 
 #printArea { display: none; }
 #toast {
@@ -467,7 +488,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       <div class="status-line">
         <span class="live-dot" id="liveDot"></span>
         <span id="desktopStatus">Подключение к Google Таблице…</span>
-        <span class="sync-pill" id="syncPill" title="Автоматическая мгновенная синхронизация всех устройств">⟳ Синхр.…</span>
+        <span id="editorBadge" title="Режим">🔒 Просмотр</span>
       </div>
     </div>
   </div>
@@ -475,16 +496,13 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
   <button id="mobileMeetingBtn" type="button" title="Выбрать совещание">
     <span class="mm-text">
       <span class="mm-title" id="mobileMeetingTitle">Загрузка совещаний…</span>
-      <span class="mm-sub">
-        <span class="live-dot" id="mobileLiveDot"></span>
-        <span id="mobileSyncDot" title="Мгновенная синхронизация">⚡</span>
-        <span id="mobileMeetingSub">Автообновление 10 сек.</span>
-      </span>
+      <span class="mm-sub"><span class="live-dot" id="mobileLiveDot"></span><span id="mobileMeetingSub">Автообновление 10 сек.</span></span>
     </span>
     <span class="mm-arrow">▾</span>
   </button>
 
   <div class="actions">
+    <button class="icon-btn" id="editorBtn" type="button" title="Вход в режим редактора (код 1996)">🔒</button>
     <button class="icon-btn" id="refreshBtn" type="button" title="Обновить данные сейчас">↻</button>
     <button class="icon-btn" id="settingsBtn" type="button" title="Параметры и CSV">⚙</button>
     <button class="secondary" id="printBtn" type="button">Печать A4</button>
@@ -525,7 +543,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       <button id="selectionCancelBtn" type="button">Отмена</button>
     </div>
 
-    <div class="muted" id="numHint">Номера — между стулом и столом (параллельно с № 1 в сторону ГД). Все изменения мгновенно синхронизируются между устройствами.</div>
+    <div class="muted" id="numHint">Номера — между стулом и столом (параллельно с № 1 в сторону ГД). Перетащите кресло с ФИО пальцем или мышью вдоль своей стороны или на другую сторону стола — стулья раздвинутся, а нумерация останется на местах. Тап по креслу — настройки.</div>
 
     <div id="stageScroll">
       <div id="stageScaler">
@@ -536,7 +554,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
 
   <aside class="panel desktop-panel">
     <h2>Участники без места <span id="freeCount"></span></h2>
-    <p>Перетащите ФИО на стул (если занят — прежний участник вернётся сюда).</p>
+    <p>Перетащите ФИО на стул пальцем или мышью (если занят — стулья раздвинутся, прежний участник сдвинется).</p>
     <div id="people"></div>
     <div class="drop-return" id="returnZone">Перетащите сюда участника, чтобы освободить стул</div>
     <hr class="divider">
@@ -605,25 +623,35 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
   let meetings = [], current = null, drag = null, selected = null, layouts = {};
   let loading = false, localCsv = false, signature = "", pendingRender = false;
   let mobileTab = "people", zoomMode = "fit", activeSheet = null, toastTimer = 0;
-
-  // Переменные мгновенной облачной синхронизации
-  const clientId = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
-  let logicalClock = Date.now();
-  let ceoUpdatedAt = 0;
-  let mqttClients = [];
-  let localBus = null;
-  let publishTimer = 0;
-  let lastPublishAt = 0;
-  let seedTimer = 0;
-  let receivedCloudState = false;
+  // Состояние перетаскивания пальцем/мышью (Pointer Events) и геометрия сцены
+  let seatEls = {}, stageGeom = null, pDrag = null, suppressClick = false, dragScrollTimer = 0;
+  // Режим редактора: без кода 1996 — только просмотр, печать и сохранение JPEG
+  const EDITOR_CODE = "1996";
+  const EDITOR_STORE = "meeting-seating-editor";
+  let editorMode = false;
+  try { editorMode = sessionStorage.getItem(EDITOR_STORE) === "1"; } catch (_) {}
+  function setEditorMode(on) {
+    editorMode = !!on;
+    try { sessionStorage.setItem(EDITOR_STORE, on ? "1" : "0"); } catch (_) {}
+    document.body.classList.toggle("editor-mode", editorMode);
+    document.body.classList.toggle("view-mode", !editorMode);
+    const btn = $("editorBtn"), badge = $("editorBadge");
+    if (btn) { btn.textContent = editorMode ? "🔓" : "🔒"; btn.classList.toggle("editor-on", editorMode); btn.title = editorMode ? "Режим редактора включён — нажмите, чтобы заблокировать" : "Вход в режим редактора (код 1996)"; }
+    if (badge) { badge.textContent = editorMode ? "🔓 Редактор" : "🔒 Просмотр"; badge.classList.toggle("on", editorMode); }
+    const hint = $("numHint");
+    if (hint) hint.textContent = editorMode
+      ? "Режим редактора: перетащите кресло с ФИО пальцем или мышью вдоль своей стороны или на другую сторону стола — стулья раздвинутся, а нумерация останется на местах. Тап по креслу — настройки."
+      : "Режим просмотра: доступна только смена совещания, печать и сохранение JPEG. Для редактирования нажмите 🔒 и введите код 1996.";
+    if (!editorMode) selected = null;
+  }
+  function requireEditor() {
+    if (editorMode) return true;
+    toast("Режим просмотра: введите код 1996 (кнопка 🔒) для редактирования");
+    return false;
+  }
 
   const isMobileScreen = () => window.matchMedia("(max-width: 900px)").matches;
   const isIOS = () => /iPhone|iPad|iPod/i.test(navigator.userAgent || "") || Boolean(navigator.standalone);
-
-  function nextClock(minVal = 0) {
-    logicalClock = Math.max(Date.now(), logicalClock, Number(minVal) || 0) + 1;
-    return logicalClock;
-  }
 
   (function load() {
     let saved = {};
@@ -632,28 +660,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
               JSON.parse(localStorage.getItem("meeting-seating-v2") || "null") ||
               JSON.parse(localStorage.getItem("meeting-seating-v1") || "{}") || {};
     } catch (_) {}
-    const rawLayouts = saved.layouts || {};
-    layouts = {};
-    for (const [k, v] of Object.entries(rawLayouts)) {
-      if (!v || typeof v !== "object") continue;
-      const hasEdits = Object.keys(v.equipment || {}).length > 0 ||
-                       Object.keys(v.seats || {}).length > 1 ||
-                       (Number(v.L) && Number(v.L) !== 5) ||
-                       (Number(v.R) && Number(v.R) !== 5);
-      const u = Number(v.u) || (hasEdits ? 1 : 0);
-      if (u > logicalClock) logicalClock = u;
-      layouts[k] = {
-        L: Number(v.L) || 5,
-        R: Number(v.R) || 5,
-        seats: Object.assign({}, v.seats || {}),
-        equipment: Object.assign({}, v.equipment || {}),
-        ceoAuto: Boolean(v.ceoAuto),
-        u
-      };
-    }
-    ceoUpdatedAt = Number(saved.ceoTs) || 0;
-    if (ceoUpdatedAt > logicalClock) logicalClock = ceoUpdatedAt;
-
+    layouts = saved.layouts || {};
     const sUrl = (saved.url || "").trim();
     const customValid = /\/spreadsheets\/d\/[a-zA-Z0-9_-]+/.test(sUrl) && !sUrl.includes("1P9F-tx_hOs6YXFbtlD7sgNXV7cBKa22F-EtlL3nVl2M");
     sheetUrl = customValid ? sUrl : DEFAULT_URL;
@@ -662,27 +669,13 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     if (!isMobileScreen()) $("saveBtn").textContent = "Сохранить JPEG";
   })();
 
-  function pruneLayouts() {
-    const keys = Object.keys(layouts);
-    if (keys.length <= 80) return;
-    const activeIds = new Set(meetings.map(m => m.id));
-    const removable = keys
-      .filter(k => !activeIds.has(k))
-      .sort((a, b) => (Number(layouts[b]?.u) || 0) - (Number(layouts[a]?.u) || 0));
-    for (let i = 50; i < removable.length; i++) {
-      delete layouts[removable[i]];
-    }
-  }
-
   function persist() {
-    pruneLayouts();
     try {
       localStorage.setItem(STORE, JSON.stringify({
         layouts,
         url: sheetUrl || DEFAULT_URL,
         key: apiKey || DEFAULT_API_KEY,
-        ceo: $("ceoName").value,
-        ceoTs: ceoUpdatedAt
+        ceo: $("ceoName").value
       }));
     } catch (_) {}
   }
@@ -705,299 +698,6 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
 
   const clean = v => String(v == null ? "" : v).replace(/\s+/g, " ").trim();
   const cell = (row, i) => i < 0 ? "" : clean(row ? row[i] : "");
-
-  /* ---------- Мгновенная автоматическая синхронизация всех устройств ---------- */
-  function syncTopic() {
-    const sid = safeIdentity().id + "|" + DEFAULT_API_KEY.slice(0, 14);
-    let h1 = 0x811c9dc5, h2 = 0x01000193;
-    for (let i = 0; i < sid.length; i++) {
-      const ch = sid.charCodeAt(i);
-      h1 ^= ch; h1 = Math.imul(h1, 0x01000193);
-      h2 ^= (ch + i); h2 = Math.imul(h2, 0x85ebca6b);
-    }
-    const hex = (h1 >>> 0).toString(16).padStart(8, "0") + (h2 >>> 0).toString(16).padStart(8, "0");
-    return "rassadka-live-v4/chan-" + hex + "/state";
-  }
-
-  function buildSyncPayload() {
-    pruneLayouts();
-    const exported = {};
-    for (const [mId, l] of Object.entries(layouts)) {
-      if (!l || typeof l !== "object") continue;
-      if ((Number(l.u) || 0) > 0) {
-        exported[mId] = {
-          L: clamp(l.L),
-          R: clamp(l.R),
-          seats: l.seats || {},
-          equipment: l.equipment || {},
-          ceoAuto: Boolean(l.ceoAuto),
-          u: Number(l.u) || 0
-        };
-      }
-    }
-    return {
-      v: 4,
-      sender: clientId,
-      ts: logicalClock,
-      ceo: $("ceoName").value,
-      ceoTs: ceoUpdatedAt,
-      layouts: exported
-    };
-  }
-
-  function updateSyncIndicator(pulse = false) {
-    const onlineCount = mqttClients.filter(c => c && c.connected).length;
-    const pill = $("syncPill");
-    const mDot = $("mobileSyncDot");
-    const settingsStatus = document.getElementById("settingsSyncStatus");
-
-    if (onlineCount > 0) {
-      pill.textContent = "⚡ Синхр. онлайн";
-      pill.classList.add("online");
-      mDot.classList.add("online");
-      if (settingsStatus) settingsStatus.textContent = "Активна ⚡ (все устройства синхронизируются мгновенно)";
-    } else {
-      pill.textContent = navigator.onLine === false ? "Офлайн" : "⟳ Синхр.…";
-      pill.classList.remove("online");
-      mDot.classList.remove("online");
-      if (settingsStatus) settingsStatus.textContent = navigator.onLine === false ? "Ожидание интернета…" : "Подключение к облаку…";
-    }
-
-    if (pulse) {
-      pill.classList.add("pulse");
-      mDot.classList.add("pulse");
-      setTimeout(() => {
-        pill.classList.remove("pulse");
-        mDot.classList.remove("pulse");
-      }, 380);
-    }
-  }
-
-  function publishNow() {
-    clearTimeout(publishTimer);
-    publishTimer = 0;
-    lastPublishAt = Date.now();
-    persist();
-    const raw = JSON.stringify(buildSyncPayload());
-    const topic = syncTopic();
-
-    if (localBus) {
-      try { localBus.postMessage(raw); } catch (_) {}
-    }
-    mqttClients.forEach(cl => {
-      try {
-        if (cl && cl.connected) {
-          cl.publish(topic, raw, {qos: 1, retain: true});
-        }
-      } catch (_) {}
-    });
-    updateSyncIndicator(true);
-  }
-
-  function schedulePublish() {
-    const elapsed = Date.now() - lastPublishAt;
-    if (elapsed >= 120) {
-      publishNow();
-    } else if (!publishTimer) {
-      publishTimer = setTimeout(publishNow, 120 - elapsed);
-    }
-  }
-
-  function commitLayoutChange(l) {
-    if (!l) return;
-    l.u = nextClock(l.u);
-    schedulePublish();
-  }
-
-  function commitCeoChange() {
-    ceoUpdatedAt = nextClock(ceoUpdatedAt);
-    schedulePublish();
-  }
-
-  function applyIncomingState(raw, fromCloud = false) {
-    let msg = raw;
-    if (typeof raw === "string") {
-      try { msg = JSON.parse(raw); } catch (_) { return; }
-    }
-    if (!msg || msg.v !== 4) return;
-    if (fromCloud) receivedCloudState = true;
-    if (msg.sender === clientId) return;
-
-    if (Number(msg.ts) > logicalClock) logicalClock = Number(msg.ts);
-
-    let changed = false;
-    let localHasNewer = false;
-
-    const incCeoTs = Number(msg.ceoTs) || 0;
-    if (incCeoTs > ceoUpdatedAt && typeof msg.ceo === "string") {
-      $("ceoName").value = msg.ceo;
-      ceoUpdatedAt = incCeoTs;
-      if (incCeoTs > logicalClock) logicalClock = incCeoTs;
-      changed = true;
-    } else if (ceoUpdatedAt > incCeoTs && ceoUpdatedAt > 1) {
-      localHasNewer = true;
-    }
-
-    const incLayouts = msg.layouts || {};
-    for (const [mId, incL] of Object.entries(incLayouts)) {
-      if (!incL || typeof incL !== "object") continue;
-      const incU = Number(incL.u) || 0;
-      if (incU > logicalClock) logicalClock = incU;
-      const locL = layouts[mId];
-      const locU = locL ? (Number(locL.u) || 0) : -1;
-
-      if (incU > locU) {
-        layouts[mId] = {
-          L: clamp(incL.L),
-          R: clamp(incL.R),
-          seats: Object.assign({}, incL.seats || {}),
-          equipment: Object.assign({}, incL.equipment || {}),
-          ceoAuto: Boolean(incL.ceoAuto),
-          u: incU
-        };
-        changed = true;
-      } else if (locU > incU && locU > 1) {
-        localHasNewer = true;
-      }
-    }
-
-    if (fromCloud) {
-      for (const [mId, locL] of Object.entries(layouts)) {
-        const locU = Number(locL?.u) || 0;
-        if (locU > 1 && !incLayouts[mId]) {
-          localHasNewer = true;
-          break;
-        }
-      }
-    }
-
-    if (changed) {
-      persist();
-      updateSyncIndicator(true);
-      if (drag) pendingRender = true;
-      else render();
-    }
-    if (fromCloud && localHasNewer) {
-      schedulePublish();
-    }
-  }
-
-  function loadScriptWithFallback(urls) {
-    return new Promise((resolve, reject) => {
-      if (window.mqtt) return resolve(window.mqtt);
-      let idx = 0;
-      const next = () => {
-        if (idx >= urls.length) return reject(new Error("MQTT CDN недоступен"));
-        const s = document.createElement("script");
-        s.src = urls[idx++];
-        s.async = true;
-        s.onload = () => window.mqtt ? resolve(window.mqtt) : next();
-        s.onerror = next;
-        document.head.appendChild(s);
-      };
-      next();
-    });
-  }
-
-  function initRealtimeSync() {
-    // Мгновенная синхронизация между вкладками одного браузера
-    try {
-      if ("BroadcastChannel" in window) {
-        localBus = new BroadcastChannel("rassadka_bus_v4");
-        localBus.onmessage = e => applyIncomingState(e.data, false);
-      }
-    } catch (_) {}
-
-    window.addEventListener("storage", e => {
-      if (e.key === STORE && e.newValue) {
-        try {
-          const parsed = JSON.parse(e.newValue);
-          if (parsed) {
-            applyIncomingState({
-              v: 4,
-              sender: "storage",
-              ts: Date.now(),
-              ceo: parsed.ceo,
-              ceoTs: parsed.ceoTs || 0,
-              layouts: parsed.layouts || {}
-            }, false);
-          }
-        } catch (_) {}
-      }
-    });
-
-    // Мгновенная облачная синхронизация через независимые WSS MQTT-брокеры (включая порт 443)
-    const cdns = [
-      "https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js",
-      "https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js",
-      "https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.10.1/mqtt.min.js"
-    ];
-    const brokers = [
-      "wss://broker.emqx.io:8084/mqtt",
-      "wss://mqtt.eclipseprojects.io:443/mqtt",
-      "wss://broker.hivemq.com:8884/mqtt"
-    ];
-
-    loadScriptWithFallback(cdns).then(mqttLib => {
-      const topic = syncTopic();
-      brokers.forEach((brokerUrl, i) => {
-        try {
-          const cl = mqttLib.connect(brokerUrl, {
-            clientId: "rsd4_" + clientId + "_" + i,
-            clean: true,
-            keepalive: 28,
-            reconnectPeriod: 3500,
-            connectTimeout: 9000,
-            protocolVersion: 4
-          });
-          mqttClients.push(cl);
-
-          cl.on("connect", () => {
-            updateSyncIndicator(false);
-            cl.subscribe(topic, {qos: 1}, err => {
-              if (!err && !seedTimer) {
-                // Если на этом устройстве уже есть сохранённые правки, а облако пустое — отправляем их
-                seedTimer = setTimeout(() => {
-                  const hasLocalEdits = Object.values(layouts).some(x => (Number(x?.u) || 0) > 0) || ceoUpdatedAt > 0;
-                  if (!receivedCloudState && hasLocalEdits) publishNow();
-                }, 1600);
-              }
-            });
-          });
-
-          cl.on("message", (t, payload) => {
-            if (t !== topic) return;
-            try {
-              const str = typeof payload === "string" ? payload : new TextDecoder().decode(payload);
-              applyIncomingState(str, true);
-            } catch (_) {}
-          });
-
-          cl.on("close", () => updateSyncIndicator(false));
-          cl.on("offline", () => updateSyncIndicator(false));
-          cl.on("error", () => {});
-        } catch (_) {}
-      });
-    }).catch(() => updateSyncIndicator(false));
-
-    // Пробуждение на iPhone после блокировки экрана или сворачивания PWA
-    const wakeUp = () => {
-      if (document.visibilityState === "hidden") return;
-      const topic = syncTopic();
-      mqttClients.forEach(cl => {
-        try {
-          if (cl.connected) cl.subscribe(topic, {qos: 1});
-          else cl.reconnect();
-        } catch (_) {}
-      });
-      updateSyncIndicator(false);
-      refresh(false);
-    };
-    document.addEventListener("visibilitychange", wakeUp);
-    window.addEventListener("pageshow", wakeUp);
-    window.addEventListener("online", wakeUp);
-    window.addEventListener("offline", () => updateSyncIndicator(false));
-  }
 
   /* ---------- Чтение Google Таблицы ---------- */
   function csvParse(text) {
@@ -1189,13 +889,12 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
 
   function layout() {
     if (!current) return null;
-    if (!layouts[current.id]) layouts[current.id] = {L: 5, R: 5, seats: {}, equipment: {}, ceoAuto: false, u: 0};
+    if (!layouts[current.id]) layouts[current.id] = {L: 5, R: 5, seats: {}, equipment: {}, ceoAuto: false};
     const l = layouts[current.id];
     l.L = clamp(l.L);
     l.R = clamp(l.R);
     l.seats = l.seats || {};
     l.equipment = l.equipment || {};
-    l.u = Number(l.u) || 0;
     const all = members(current), valid = {};
     all.forEach(p => { valid[p.id] = 1; });
     for (const seat of Object.keys(l.seats)) {
@@ -1277,12 +976,10 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     b.addEventListener("dragstart", e => { e.stopPropagation(); beginDrag(e, {type: "device", id: d.id}); });
     b.addEventListener("click", e => {
       e.stopPropagation();
+      if (!editorMode) return;
       if (selected && selected.type === "device" && selected.id === d.id) {
         const l = layout();
-        if (l) {
-          delete l.equipment[d.id];
-          commitLayoutChange(l);
-        }
+        if (l) delete l.equipment[d.id];
         selected = null;
         render();
         toast("Снято: " + d.label);
@@ -1324,12 +1021,16 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     const l = layout();
     document.querySelectorAll("[data-side]").forEach(btn => {
       const side = btn.getAttribute("data-side"), ch = Number(btn.getAttribute("data-change"));
-      btn.disabled = !l || (ch < 0 ? l[side] <= MIN_SEATS : l[side] >= MAX_SEATS);
+      btn.disabled = !editorMode || !l || (ch < 0 ? l[side] <= MIN_SEATS : l[side] >= MAX_SEATS);
+      btn.title = editorMode ? btn.title : "Доступно в режиме редактора (код 1996)";
     });
     $("leftCount").textContent = l ? l.L : MIN_SEATS;
     $("rightCount").textContent = l ? l.R : MIN_SEATS;
-    $("resetBtn").disabled = !l;
+    $("resetBtn").disabled = !editorMode || !l;
     $("zoomBtn").disabled = !l;
+    $("ceoName").disabled = !editorMode;
+    // В режиме просмотра сбрасываем выбор, чтобы нельзя было случайно редактировать
+    if (!editorMode && selected) selected = null;
 
     document.body.classList.toggle("has-selected-device", !!(selected && selected.type === "device"));
     document.body.classList.toggle("has-selected-person", !!(selected && selected.type === "person"));
@@ -1385,9 +1086,11 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
         owned.forEach(d => wrap.appendChild(deviceBadge(d)));
         item.appendChild(wrap);
       }
-      item.draggable = true;
-      item.addEventListener("dragstart", e => beginDrag(e, {type: "person", id: p.id}));
+      item.dataset.person = p.id;
+      item.addEventListener("pointerdown", e => attachPointerDrag(e, item, {type: "person", id: p.id, originKey: null}));
       item.onclick = () => {
+        if (suppressClick) { suppressClick = false; return; }
+        if (!editorMode) return;
         if (selected && selected.type === "device") assignDeviceToPerson(p.id, selected.id);
         else { selected = (selected && selected.type === "person" && selected.id === p.id) ? null : {type: "person", id: p.id}; render(); }
       };
@@ -1406,7 +1109,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       const item = make("div", "item", d.icon + " " + d.label);
       item.draggable = true;
       item.addEventListener("dragstart", e => beginDrag(e, {type: "device", id: d.id}));
-      item.onclick = () => { selected = (selected && selected.id === d.id) ? null : {type: "device", id: d.id}; render(); };
+      item.onclick = () => { if (!editorMode) return; selected = (selected && selected.id === d.id) ? null : {type: "device", id: d.id}; render(); };
       if (selected && selected.type === "device" && selected.id === d.id) item.classList.add("selected");
       stock.appendChild(item);
     });
@@ -1461,7 +1164,11 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
         const wrap = make("span", "chip-main", (eqIcons ? eqIcons + " " : "") + displayPersonName(p));
         if (pCeo && !pPh) wrap.appendChild(make("small", "", "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР"));
         chip.appendChild(wrap);
+        chip.dataset.person = p.id;
+        chip.addEventListener("pointerdown", e => attachPointerDrag(e, chip, {type: "person", id: p.id, originKey: null}));
         chip.onclick = () => {
+          if (suppressClick) { suppressClick = false; return; }
+          if (!editorMode) return;
           if (selected && selected.type === "device") assignDeviceToPerson(p.id, selected.id);
           else {
             selected = isSel ? null : {type: "person", id: p.id};
@@ -1484,8 +1191,8 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
           const xBtn = make("span", "chip-x", "✕");
           xBtn.onclick = e => {
             e.stopPropagation();
+            if (!editorMode) return;
             delete l.equipment[d.id];
-            commitLayoutChange(l);
             if (isSel) selected = null;
             render();
             toast("Снято: " + d.label);
@@ -1493,6 +1200,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
           chip.appendChild(xBtn);
         }
         chip.onclick = () => {
+          if (!editorMode) return;
           selected = isSel ? null : {type: "device", id: d.id};
           render();
         };
@@ -1514,6 +1222,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
   /* ---------- Отрисовка стола и кресел ---------- */
   function renderStage(stage, l, all) {
     stage.innerHTML = "";
+    seatEls = {};
     const scroller = $("stageScroll");
     const scaler = $("stageScaler");
     const mobile = isMobileScreen();
@@ -1576,6 +1285,9 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     });
 
     const {numMap, ceoId} = computeSeatNumbers(l, all);
+    // Геометрия для перетаскивания: нумерация (numMap) привязана к позициям, а не к людям,
+    // поэтому при пересадке номера мест не меняются — меняется только ФИО на кресле.
+    stageGeom = {ty, th, tw, tx, seatH, chairW, sw, sh, scale, headTop, headH, hx, geom, l, all, numMap, stage};
 
     // Стол венге
     const table = make("div", "table");
@@ -1623,9 +1335,11 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
           seat.appendChild(nm);
           if (sCeo) seat.appendChild(make("span", "ceo-tag", "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР"));
         }
-        seat.title = (person.role ? person.name + " — " + person.role : person.name) + "\n" + sideTitle(key, numMap);
-        seat.draggable = !mobile;
-        seat.addEventListener("dragstart", e => beginDrag(e, {type: "person", id: person.id}));
+        seat.title = (person.role ? person.name + " — " + person.role : person.name) + "\n" + sideTitle(key, numMap) + "\nПеретащите пальцем/мышью вдоль стороны или на другую сторону";
+        seat.dataset.person = person.id;
+        seat.dataset.seatKey = key;
+        // Pointer Events: работает и пальцем на телефоне, и мышью на ПК (вместо HTML5 DnD)
+        seat.addEventListener("pointerdown", e => attachPointerDrag(e, seat, {type: "person", id: person.id, originKey: key}));
       } else {
         if (key === "head") {
           seat.appendChild(make("span", "name", "СВОБОДНО"));
@@ -1639,7 +1353,10 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
 
       dropTarget(seat, data => place(key, data));
       seat.tabIndex = 0;
+      seatEls[key] = seat;
       seat.addEventListener("click", () => {
+        if (suppressClick) { suppressClick = false; return; }
+        if (!editorMode) return; // просмотр: клик по креслу ничего не меняет
         if (selected) {
           place(key, selected);
         } else if (mobile) {
@@ -1723,6 +1440,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
 
   // Шторка быстрого управления креслом (1-тап посадка, пересадка, оборудование)
   function openChairSheet(seatKey) {
+    if (!requireEditor()) return;
     const l = layout();
     if (!l || !current) return;
     const all = members(current);
@@ -1749,7 +1467,6 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       freeBtn.type = "button";
       freeBtn.onclick = () => {
         delete l.seats[seatKey];
-        commitLayoutChange(l);
         closeSheet();
         render();
         toast("Место освобождено");
@@ -1774,7 +1491,6 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
         btn.onclick = () => {
           if (isMine) delete l.equipment[d.id];
           else l.equipment[d.id] = occupant.id;
-          commitLayoutChange(l);
           render();
         };
         eqGrid.appendChild(btn);
@@ -1865,21 +1581,15 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
   function openSettingsSheet() {
     const body = openSheet("Параметры приложения", $("desktopStatus").textContent, {type: "settings"});
 
-    const syncBox = make("div", "sync-info-box");
-    const onlineCount = mqttClients.filter(c => c && c.connected).length;
-    const syncText = make("span", "", "Облачная синхронизация: ");
-    const syncState = make("strong", "", onlineCount > 0 ? "Активна ⚡ (все устройства синхронизируются мгновенно)" : "Подключение к облаку…");
-    syncState.id = "settingsSyncStatus";
-    syncText.appendChild(syncState);
-    syncBox.appendChild(syncText);
-    body.appendChild(syncBox);
-
     const ceoLabel = make("label", "settings-field", "ФИО генерального директора (если нет в таблице)");
     const ceoInp = make("input");
     ceoInp.value = $("ceoName").value;
+    ceoInp.disabled = !editorMode;
+    if (!editorMode) ceoInp.title = "Доступно в режиме редактора (код 1996)";
     ceoInp.onchange = () => {
+      if (!requireEditor()) { ceoInp.value = $("ceoName").value; return; }
       $("ceoName").value = ceoInp.value;
-      commitCeoChange();
+      persist();
       render();
     };
     ceoLabel.appendChild(ceoInp);
@@ -1889,17 +1599,62 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     const refB = make("button", "sheet-btn", "↻ Обновить таблицу");
     refB.type = "button";
     refB.onclick = () => { localCsv = false; closeSheet(); refresh(true); };
-    const csvB = make("button", "sheet-btn", "📄 Открыть CSV");
+    const csvB = make("button", "sheet-btn", editorMode ? "📄 Открыть CSV" : "📄 CSV (редактор)");
     csvB.type = "button";
-    csvB.onclick = () => { closeSheet(); $("csvFile").click(); };
+    csvB.onclick = () => { if (!requireEditor()) return; closeSheet(); $("csvFile").click(); };
     row.appendChild(refB);
     row.appendChild(csvB);
     body.appendChild(row);
+    if (!editorMode) body.appendChild(make("p", "muted", "В режиме просмотра доступны обновление, печать и сохранение JPEG. Для изменения ФИО ГД и загрузки CSV введите код 1996 (кнопка 🔒)."));
 
-    const info = make("p", "muted", "Подключено автоматически к постоянной Google Таблице совещаний (актуализация каждые 10 секунд). Любые изменения рассадки мгновенно передаются на все открытые устройства.");
+    const info = make("p", "muted", "Подключено автоматически к постоянной Google Таблице совещаний (актуализация каждые 10 секунд). На iPhone используйте меню Safari «Поделиться → На экран Домой» для работы в полноэкранном режиме.");
     info.style.margin = "0";
     body.appendChild(info);
   }
+
+  // Шторка ввода кода редактора (1996) / блокировки
+  function openEditorSheet() {
+    if (editorMode) {
+      const body = openSheet("Выйти из режима редактора?", "Рассадка станет доступна только для просмотра, печати и сохранения JPEG.", {type: "editor-lock"});
+      const row = make("div", "sheet-actions-row");
+      const cancelB = make("button", "sheet-btn", "Отмена");
+      cancelB.type = "button";
+      cancelB.onclick = closeSheet;
+      const lockB = make("button", "sheet-btn danger", "🔒 Заблокировать");
+      lockB.type = "button";
+      lockB.onclick = () => { setEditorMode(false); closeSheet(); render(); toast("Режим просмотра"); };
+      row.appendChild(cancelB); row.appendChild(lockB); body.appendChild(row);
+      return;
+    }
+    const body = openSheet("Режим редактора", "Введите код для редактирования рассадки", {type: "editor-code"});
+    const inp = make("input");
+    inp.className = "editor-code-input";
+    inp.type = "password";
+    inp.inputMode = "numeric";
+    inp.autocomplete = "off";
+    inp.placeholder = "••••";
+    inp.maxLength = 4;
+    body.appendChild(inp);
+    const row = make("div", "sheet-actions-row");
+    const cancelB = make("button", "sheet-btn", "Отмена");
+    cancelB.type = "button";
+    cancelB.onclick = closeSheet;
+    const okB = make("button", "sheet-btn", "🔓 Разблокировать");
+    okB.type = "button";
+    const tryUnlock = () => {
+      if (inp.value.trim() === EDITOR_CODE) {
+        setEditorMode(true); closeSheet(); render(); toast("Режим редактора включён");
+      } else {
+        inp.classList.add("err"); inp.value = ""; inp.focus();
+        toast("Неверный код");
+      }
+    };
+    okB.onclick = tryUnlock;
+    inp.addEventListener("keydown", e => { if (e.key === "Enter") tryUnlock(); });
+    row.appendChild(cancelB); row.appendChild(okB); body.appendChild(row);
+    setTimeout(() => { try { inp.focus(); } catch (_) {} }, 80);
+  }
+  $("editorBtn").onclick = openEditorSheet;
 
   $("mobileMeetingBtn").onclick = openMeetingsSheet;
   $("settingsBtn").onclick = openSettingsSheet;
@@ -1919,6 +1674,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
 
   /* ---------- Перетаскивание и операции рассадки ---------- */
   function beginDrag(e, data) {
+    if (!requireEditor()) { try { e.preventDefault(); } catch (_) {} return; }
     drag = data;
     try {
       e.dataTransfer.effectAllowed = "move";
@@ -1935,10 +1691,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     drag = null;
     document.body.classList.remove("drag-device");
     document.querySelectorAll(".drag-over").forEach(el => el.classList.remove("drag-over"));
-    if (!isMobileScreen()) {
-      document.querySelectorAll(".seat.occupied").forEach(s => { s.draggable = true; });
-    }
-    document.querySelectorAll("#people .item").forEach(s => { s.draggable = true; });
+    // Участники теперь перетаскиваются Pointer Events (палец+мышь), HTML5 DnD оставлен только для оборудования
     if (pendingRender) { pendingRender = false; render(); }
   }
   document.addEventListener("dragend", endDrag);
@@ -1949,6 +1702,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
   }
 
   function place(seatKey, data) {
+    if (!requireEditor()) return endDrag();
     const l = layout();
     if (!l || !data) return endDrag();
     if (data.type === "person") {
@@ -1958,7 +1712,6 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       if (from !== seatKey) {
         if (from) delete l.seats[from];
         l.seats[seatKey] = data.id;
-        commitLayoutChange(l);
       }
     } else if (data.type === "device") {
       const okD = devices.some(d => d.id === data.id);
@@ -1966,10 +1719,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
         toast("Сначала посадите участника на это кресло");
         return endDrag();
       }
-      if (l.equipment[data.id] !== l.seats[seatKey]) {
-        l.equipment[data.id] = l.seats[seatKey];
-        commitLayoutChange(l);
-      }
+      l.equipment[data.id] = l.seats[seatKey];
       toast("Оборудование закреплено");
     }
     selected = null;
@@ -1980,14 +1730,12 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
   }
 
   function assignDeviceToPerson(pid, did) {
+    if (!requireEditor()) return endDrag();
     const l = layout();
     if (!l) return endDrag();
     if (!devices.some(d => d.id === did)) return endDrag();
     if (!members(current).some(p => p.id === pid)) return endDrag();
-    if (l.equipment[did] !== pid) {
-      l.equipment[did] = pid;
-      commitLayoutChange(l);
-    }
+    l.equipment[did] = pid;
     toast("Оборудование закреплено");
     selected = null;
     pendingRender = false;
@@ -1997,22 +1745,13 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
   }
 
   function returnDrop(data) {
+    if (!requireEditor()) { selected = null; render(); return; }
     const l = layout();
     if (l && data) {
-      let modified = false;
       if (data.type === "person") {
-        for (const s of Object.keys(l.seats)) {
-          if (l.seats[s] === data.id) {
-            delete l.seats[s];
-            modified = true;
-          }
-        }
+        for (const s of Object.keys(l.seats)) if (l.seats[s] === data.id) delete l.seats[s];
       }
-      if (data.type === "device" && l.equipment[data.id]) {
-        delete l.equipment[data.id];
-        modified = true;
-      }
-      if (modified) commitLayoutChange(l);
+      if (data.type === "device") delete l.equipment[data.id];
     }
     selected = null;
     pendingRender = false;
@@ -2021,9 +1760,252 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     render();
   }
 
+  /* ============================================================
+     ПЕРЕТАСКИВАНИЕ ПАЛЬЦЕМ / МЫШЬЮ (Pointer Events)
+     - кресло с участником можно тянуть вдоль своей стороны
+       и с одной стороны стола на другую;
+     - во время перетаскивания стулья на целевой стороне
+       раздвигаются (translateY), открывая просвет между ними;
+     - при отпускании участник вставляется на место курсора,
+       промежуточные участники сдвигаются на одно кресло
+       (вставка со сдвигом, а не перезапись);
+     - нумерация (computeSeatNumbers) привязана к позициям кресел,
+       поэтому номера мест НЕ меняются — меняется только ФИО.
+     ============================================================ */
+  function sideList(l, side) {
+    const arr = [];
+    for (let i = 0; i < l[side]; i++) arr.push(l.seats[side + i] || null);
+    return arr;
+  }
+  function writeSideList(l, side, arr) {
+    for (let i = 0; i < l[side]; i++) {
+      const k = side + i;
+      if (arr[i]) l.seats[k] = arr[i]; else delete l.seats[k];
+    }
+  }
+  function parseSeatKey(key) {
+    if (key === "head") return {side: "H", index: 0};
+    const m = /^([LR])(\d+)$/.exec(key || "");
+    return m ? {side: m[1], index: Number(m[2])} : null;
+  }
+
+  // Вставка участника на targetKey со сдвигом (раздвиганием) соседей.
+  // originKey=null — участник из списка без места.
+  function dropPersonToSeat(targetKey, personId, originKey) {
+    if (!requireEditor()) return;
+    const l = layout();
+    if (!l || !current) return;
+    if (!members(current).some(p => p.id === personId)) return;
+    if (originKey === targetKey) return;
+    const t = parseSeatKey(targetKey);
+    if (!t) return;
+    const o = originKey ? parseSeatKey(originKey) : null;
+
+    if (t.side === "H") {
+      // Глава стола: обмен местами (если занята) или простое перемещение
+      const headOccupant = l.seats.head || null;
+      if (o && o.side === "H") return;
+      if (o) delete l.seats[originKey];
+      l.seats.head = personId;
+      if (headOccupant && headOccupant !== personId && o) l.seats[originKey] = headOccupant;
+      // если участник был без места, прежний глава становится без места
+      selected = null; pendingRender = false; render(); return;
+    }
+    if (o && o.side === "H") {
+      // Из главы на боковую сторону: вставка со сдвигом на этой стороне
+      delete l.seats.head;
+      const arr = sideList(l, t.side);
+      if (!arr[t.index]) { arr[t.index] = personId; }
+      else { for (let i = arr.length - 1; i > t.index; i--) arr[i] = arr[i - 1]; arr[t.index] = personId; }
+      writeSideList(l, t.side, arr);
+      selected = null; pendingRender = false; render(); return;
+    }
+
+    if (o && o.side === t.side) {
+      // Вдоль одной стороны: сдвиг промежуточных участников на одно кресло
+      const arr = sideList(l, t.side);
+      if (!arr[t.index]) {
+        arr[t.index] = personId; arr[o.index] = null;
+      } else if (o.index < t.index) {
+        for (let i = o.index; i < t.index; i++) arr[i] = arr[i + 1];
+        arr[t.index] = personId;
+      } else {
+        for (let i = o.index; i > t.index; i--) arr[i] = arr[i - 1];
+        arr[t.index] = personId;
+      }
+      writeSideList(l, t.side, arr);
+    } else {
+      // С другой стороны (или из списка без места): вставка со сдвигом к концу стороны.
+      // Если сторона заполнена, последний участник становится без места.
+      const arr = sideList(l, t.side);
+      if (!arr[t.index]) {
+        arr[t.index] = personId;
+      } else {
+        for (let i = arr.length - 1; i > t.index; i--) arr[i] = arr[i - 1];
+        arr[t.index] = personId;
+      }
+      writeSideList(l, t.side, arr);
+      if (o) { const oa = sideList(l, o.side); oa[o.index] = null; writeSideList(l, o.side, oa); }
+    }
+    selected = null;
+    pendingRender = false;
+    render();
+  }
+
+  function clearSpread() {
+    Object.values(seatEls).forEach(el => { el.style.transform = ""; el.classList.remove("drag-target"); });
+    document.querySelectorAll(".ptr-over").forEach(el => el.classList.remove("ptr-over"));
+  }
+
+  // Раздвинуть стулья целевой стороны вокруг точки вставки
+  function applySpread(target) {
+    clearSpread();
+    if (!target || !stageGeom) return;
+    if (target.side === "H") {
+      const el = seatEls.head;
+      if (el) el.classList.add("drag-target");
+      return;
+    }
+    const gap = Math.min(30, Math.max(16, stageGeom.seatH * 0.55));
+    const count = stageGeom.l[target.side];
+    for (let i = 0; i < count; i++) {
+      const el = seatEls[target.side + i];
+      if (!el) continue;
+      const off = i < target.index ? -gap / 2 : gap / 2;
+      el.style.transform = "translateY(" + off + "px)";
+      if (i === target.index) el.classList.add("drag-target");
+    }
+  }
+
+  function targetFromPoint(clientX, clientY) {
+    if (!stageGeom || !stageGeom.stage) return null;
+    const rect = stageGeom.stage.getBoundingClientRect();
+    const sc = stageGeom.scale || 1;
+    const lx = (clientX - rect.left) / sc;
+    const ly = (clientY - rect.top) / sc;
+    const g = stageGeom;
+    // Глава стола
+    if (ly >= g.headTop - 14 && ly <= g.ty && lx >= g.hx - 10 && lx <= g.hx + g.chairW + 10) {
+      return {side: "H", index: 0, key: "head"};
+    }
+    // Боковые стороны: вертикальный диапазон стола
+    if (ly >= g.ty - 8 && ly <= g.ty + g.th + 8) {
+      let side = null;
+      if (lx < g.tx + g.tw / 2) side = "L"; else side = "R";
+      // Если палец далеко за пределами сцены по X — не засчитываем
+      if (lx < -20 || lx > g.sw + 20) return null;
+      const count = g.l[side];
+      let idx = Math.floor((ly - g.ty) / g.th * count);
+      idx = Math.max(0, Math.min(count - 1, idx));
+      return {side, index: idx, key: side + idx};
+    }
+    return null;
+  }
+
+  function overReturnZone(clientX, clientY) {
+    const ids = ["returnZone", "people", "trayContent"];
+    for (const id of ids) {
+      const el = $(id);
+      if (!el || el.offsetParent === null && id !== "returnZone") continue;
+      const r = el.getBoundingClientRect();
+      if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) return el;
+    }
+    return null;
+  }
+
+  function makeClone(sourceEl, personId) {
+    const l = layout();
+    const all = l ? members(current) : [];
+    const p = all.find(x => x.id === personId);
+    const clone = make("div", "drag-clone" + (p && isCeo(p) ? " ceo" : ""));
+    clone.textContent = p ? displayPersonName(p, true) : "";
+    const r = sourceEl.getBoundingClientRect();
+    clone.style.width = Math.max(120, r.width) + "px";
+    clone.style.height = Math.max(34, r.height) + "px";
+    document.body.appendChild(clone);
+    return clone;
+  }
+
+  function attachPointerDrag(e, sourceEl, source) {
+    if (pDrag) return;
+    if (!editorMode) return; // в режиме просмотра перетаскивание запрещено
+    if (e.button !== undefined && e.button !== 0 && e.pointerType === "mouse") return;
+    // Не мешаем выбору оборудования и не начинаем drag с бейджей оборудования
+    if (e.target && e.target.closest && e.target.closest(".dev")) return;
+    const startX = e.clientX, startY = e.clientY;
+    let moved = false;
+    const onMove = ev => {
+      if (!moved) {
+        if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < 7) return;
+        moved = true;
+        suppressClick = true;
+        const clone = makeClone(sourceEl, source.id);
+        pDrag = {source, sourceEl, clone, target: null, clientX: ev.clientX, clientY: ev.clientY};
+        document.body.classList.add("dragging-person");
+        if (source.originKey && seatEls[source.originKey]) seatEls[source.originKey].classList.add("drag-origin");
+        try { sourceEl.setPointerCapture && ev.pointerId !== undefined && sourceEl.setPointerCapture(ev.pointerId); } catch (_) {}
+        startDragScroll();
+      }
+      if (!pDrag) return;
+      pDrag.clientX = ev.clientX; pDrag.clientY = ev.clientY;
+      pDrag.clone.style.left = ev.clientX + "px";
+      pDrag.clone.style.top = ev.clientY + "px";
+      const rz = overReturnZone(ev.clientX, ev.clientY);
+      document.querySelectorAll(".ptr-over").forEach(el => { if (el !== rz) el.classList.remove("ptr-over"); });
+      if (rz) rz.classList.add("ptr-over");
+      const t = targetFromPoint(ev.clientX, ev.clientY);
+      pDrag.target = t;
+      pDrag.returnEl = rz;
+      applySpread(t);
+      if (ev.cancelable) ev.preventDefault();
+    };
+    const onUp = ev => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      stopDragScroll();
+      if (!moved || !pDrag) { return; }
+      const finished = pDrag;
+      pDrag = null;
+      document.body.classList.remove("dragging-person");
+      if (finished.clone) finished.clone.remove();
+      clearSpread();
+      document.querySelectorAll(".drag-origin").forEach(el => el.classList.remove("drag-origin"));
+      setTimeout(() => { suppressClick = false; }, 60);
+      // Бросили на зону возврата / список без места — освободить кресло
+      if (finished.returnEl && (finished.returnEl.id === "returnZone" || finished.returnEl.id === "people" || finished.returnEl.id === "trayContent")) {
+        if (source.originKey) returnDrop({type: "person", id: source.id});
+        return;
+      }
+      if (finished.target) {
+        dropPersonToSeat(finished.target.key, source.id, source.originKey);
+      }
+    };
+    window.addEventListener("pointermove", onMove, {passive: false});
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+  }
+
+  // Автопрокрутка сцены при перетаскивании у краёв (важно на телефоне)
+  function startDragScroll() {
+    stopDragScroll();
+    const scroller = $("stageScroll");
+    dragScrollTimer = setInterval(() => {
+      if (!pDrag) return;
+      const r = scroller.getBoundingClientRect();
+      const edge = 46;
+      if (pDrag.clientY < r.top + edge) scroller.scrollTop -= 9;
+      else if (pDrag.clientY > r.bottom - edge) scroller.scrollTop += 9;
+      if (pDrag.clientX < r.left + edge) scroller.scrollLeft -= 9;
+      else if (pDrag.clientX > r.right - edge) scroller.scrollLeft += 9;
+    }, 30);
+  }
+  function stopDragScroll() { if (dragScrollTimer) { clearInterval(dragScrollTimer); dragScrollTimer = 0; } }
+
   ["returnZone", "equipment", "people"].forEach(id => dropTarget($(id), returnDrop));
 
   $("returnZone").addEventListener("click", () => {
+    if (!editorMode) return;
     if (selected && selected.type === "person") {
       returnDrop(selected);
       toast("Место освобождено");
@@ -2031,11 +2013,11 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
   });
 
   $("equipment").addEventListener("click", e => {
+    if (!editorMode) return;
     if (e.target && e.target.id === "equipment" && selected && selected.type === "device") {
       const l = layout();
       if (l && l.equipment[selected.id]) {
         delete l.equipment[selected.id];
-        commitLayoutChange(l);
         selected = null;
         render();
         toast("Оборудование снято");
@@ -2045,20 +2027,18 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
 
   document.querySelectorAll("[data-side]").forEach(btn => {
     btn.onclick = () => {
+      if (!requireEditor()) return;
       const l = layout();
       if (!l) return;
       const side = btn.getAttribute("data-side");
-      const nextVal = clamp(l[side] + Number(btn.getAttribute("data-change")));
-      if (nextVal !== l[side]) {
-        l[side] = nextVal;
-        commitLayoutChange(l);
-        render();
-      }
+      l[side] = clamp(l[side] + Number(btn.getAttribute("data-change")));
+      render();
     };
   });
 
-  // Сброс через удобную шторку (синхронизируется мгновенно на все устройства)
+  // Сброс через удобную шторку (работает идеально и в iOS PWA, и на ПК)
   $("resetBtn").onclick = () => {
+    if (!requireEditor()) return;
     const l = layout();
     if (!l || !current) return;
     const body = openSheet("Сбросить рассадку?", current.title, {type: "reset"});
@@ -2075,8 +2055,6 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       l.seats = {};
       l.equipment = {};
       l.ceoAuto = false;
-      layout();
-      commitLayoutChange(l);
       selected = null;
       closeSheet();
       render();
@@ -2096,8 +2074,36 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     const still = meetings.some(m => current && m.id === current.id);
     if (!still) current = meetings.filter(m => m.id === prevId)[0] || meetings[0] || null;
     if (changed || ((current ? current.id : null) !== prevId)) {
-      if (drag) pendingRender = true; else render();
+      if (drag || pDrag) pendingRender = true; else render();
     }
+  }
+
+  // Демо-данные: показываются только если таблица недоступна (например, в офлайн-превью),
+  // чтобы сразу можно было проверить перетаскивание. При доступной таблице не используются.
+  let demoLoaded = false;
+  function loadDemo() {
+    if (demoLoaded || meetings.length) return;
+    demoLoaded = true;
+    const names = ["Иванов Иван Иванович","Петров Пётр Петрович","Сидорова Анна Сергеевна","Козлов Дмитрий Андреевич","Морозова Елена Викторовна","Волков Сергей Николаевич","Соколова Ольга Дмитриевна","Лебедев Андрей Владимирович","Кузнецова Мария Александровна","Попов Алексей Игоревич"];
+    const demo = [{
+      id: "demo|1", key: "demo", title: "Демо-совещание (проверка перетаскивания)", date: "12.11.2026", time: "10:00",
+      people: names.map((n, i) => ({id: "p:" + n.toLowerCase() + "#1", name: n, role: i === 0 ? "Генеральный директор" : ""}))
+    }];
+    applyMeetings(demo);
+    // Предрассадить для наглядности: ГД — глава, остальные — по 5 слева/справа
+    const l = layout();
+    if (l) {
+      const all = members(current);
+      l.seats = {};
+      all.forEach((p, i) => {
+        if (isCeo(p)) l.seats.head = p.id;
+        else if (i <= 5) l.seats["L" + (i - 1)] = p.id;
+        else if (i <= 8) l.seats["R" + (i - 6)] = p.id;
+        // последний участник остаётся без места — для проверки перетаскивания из списка
+      });
+      render();
+    }
+    status("Демо-режим: таблица недоступна, показаны тестовые участники", "warn");
   }
 
   function refresh(manual) {
@@ -2113,11 +2119,13 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     }).catch(e => {
       status("Ошибка сети: " + e.message, "bad");
       loading = false;
+      loadDemo();
     });
   }
 
   $("refreshBtn").onclick = () => { localCsv = false; refresh(true); toast("Обновление данных…"); };
   $("csvFile").onchange = e => {
+    if (!requireEditor()) { e.target.value = ""; return; }
     const file = e.target.files ? e.target.files[0] : null;
     if (!file) return;
     file.text().then(txt => {
@@ -2129,12 +2137,12 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     }).catch(err => status("Ошибка CSV: " + err.message, "bad"));
     e.target.value = "";
   };
-  $("ceoName").onchange = () => { commitCeoChange(); render(); };
+  $("ceoName").onchange = () => { if (!requireEditor()) return; persist(); render(); };
 
   let rz = 0;
   window.addEventListener("resize", () => {
     cancelAnimationFrame(rz);
-    rz = requestAnimationFrame(() => { if (!drag) render(); });
+    rz = requestAnimationFrame(() => { if (!drag && !pDrag) render(); });
   });
 
   /* ---------- Формирование JPEG и Печать A4 (для ПК) ---------- */
@@ -2402,11 +2410,11 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     document.head.appendChild(lk);
   } catch (_) {}
 
+  setEditorMode(editorMode);
   render();
-  initRealtimeSync();
   refresh(true);
   setInterval(refresh, REFRESH_MS);
 })();
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58b7e17cd34ec67',t:'MTc5NDM4MTE4Nw=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58b7e17cd34ec67',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
