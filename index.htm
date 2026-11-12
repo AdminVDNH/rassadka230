@@ -116,6 +116,7 @@ body.view-mode .seat .arrived-badge { cursor: default; }
 }
 .arrived-check.on { background: #1a7f37; border-color: #1a7f37; color: #fff; }
 body.view-mode .arrived-check { cursor: default; }
+body.view-mode .chip .arrived-check { display: none !important; }
 .chip .arrived-check { width: 18px; height: 18px; font-size: 12px; }
 .item .arrived-check { margin-right: 7px; vertical-align: -4px; }
 .sheet-arrived { display: flex; align-items: center; gap: 9px; padding: 10px 12px; border-radius: 11px; border: 1.5px solid #dde5de; background: #f9fbf9; font-size: 13.5px; font-weight: 700; width: 100%; text-align: left; }
@@ -529,7 +530,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
   </button>
 
   <div class="actions">
-    <button class="icon-btn" id="editorBtn" type="button" title="Вход в режим редактора (код 1996)">🔒</button>
+    <button class="icon-btn" id="editorBtn" type="button" title="Вход в режим редактора">🔒</button>
     <button class="icon-btn" id="refreshBtn" type="button" title="Обновить данные сейчас">↻</button>
     <button class="icon-btn" id="settingsBtn" type="button" title="Параметры и CSV">⚙</button>
     <button class="secondary" id="printBtn" type="button">Печать A4</button>
@@ -663,17 +664,17 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     document.body.classList.toggle("editor-mode", editorMode);
     document.body.classList.toggle("view-mode", !editorMode);
     const btn = $("editorBtn"), badge = $("editorBadge");
-    if (btn) { btn.textContent = editorMode ? "🔓" : "🔒"; btn.classList.toggle("editor-on", editorMode); btn.title = editorMode ? "Режим редактора включён — нажмите, чтобы заблокировать" : "Вход в режим редактора (код 1996)"; }
+    if (btn) { btn.textContent = editorMode ? "🔓" : "🔒"; btn.classList.toggle("editor-on", editorMode); btn.title = editorMode ? "Режим редактора включён — нажмите, чтобы заблокировать" : "Вход в режим редактора"; }
     if (badge) { badge.textContent = editorMode ? "🔓 Редактор" : "🔒 Просмотр"; badge.classList.toggle("on", editorMode); }
     const hint = $("numHint");
     if (hint) hint.textContent = editorMode
       ? "Режим редактора: перетащите кресло с ФИО пальцем или мышью вдоль своей стороны или на другую сторону стола — стулья раздвинутся, а нумерация останется на местах. Тап по креслу — настройки."
-      : "Режим просмотра: доступна только смена совещания, печать и сохранение JPEG. Для редактирования нажмите 🔒 и введите код 1996.";
+      : "Режим просмотра: доступна только смена совещания, печать и сохранение JPEG. Для редактирования нажмите 🔒 и введите код редактора.";
     if (!editorMode) selected = null;
   }
   function requireEditor() {
     if (editorMode) return true;
-    toast("Режим просмотра: введите код 1996 (кнопка 🔒) для редактирования");
+    toast("Режим просмотра: введите код редактора (кнопка 🔒) для редактирования");
     return false;
   }
 
@@ -1065,7 +1066,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     document.querySelectorAll("[data-side]").forEach(btn => {
       const side = btn.getAttribute("data-side"), ch = Number(btn.getAttribute("data-change"));
       btn.disabled = !editorMode || !l || (ch < 0 ? l[side] <= MIN_SEATS : l[side] >= MAX_SEATS);
-      btn.title = editorMode ? btn.title : "Доступно в режиме редактора (код 1996)";
+      btn.title = editorMode ? btn.title : "Доступно в режиме редактора";
     });
     $("leftCount").textContent = l ? l.L : MIN_SEATS;
     $("rightCount").textContent = l ? l.R : MIN_SEATS;
@@ -1220,14 +1221,18 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
         chip.type = "button";
         const eqIcons = devices.filter(d => l.equipment[d.id] === p.id).map(d => d.icon).join("");
         const arrivedNow = isArrived(l, p.id);
-        const wrap = make("span", "chip-main", (arrivedNow ? "✓ " : "") + (eqIcons ? eqIcons + " " : "") + displayPersonName(p));
+        // В режиме просмотра в нижнем списке галочки прибытия нет вообще (ни отметки, ни возможности её ставить)
+        const showArrived = editorMode && arrivedNow;
+        const wrap = make("span", "chip-main", (showArrived ? "✓ " : "") + (eqIcons ? eqIcons + " " : "") + displayPersonName(p));
         if (pCeo && !pPh) wrap.appendChild(make("small", "", "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР"));
         chip.appendChild(wrap);
-        const chk = make("span", "arrived-check" + (arrivedNow ? " on" : ""), "✓");
-        chk.title = arrivedNow ? "Прибыл" : "Отметить прибытие (редактор)";
-        chk.onclick = e => { e.stopPropagation(); toggleArrived(p.id); };
-        chk.onpointerdown = e => e.stopPropagation();
-        chip.appendChild(chk);
+        if (editorMode) {
+          const chk = make("span", "arrived-check" + (arrivedNow ? " on" : ""), "✓");
+          chk.title = arrivedNow ? "Прибыл" : "Отметить прибытие (редактор)";
+          chk.onclick = e => { e.stopPropagation(); toggleArrived(p.id); };
+          chk.onpointerdown = e => e.stopPropagation();
+          chip.appendChild(chk);
+        }
         chip.dataset.person = p.id;
         chip.addEventListener("pointerdown", e => attachPointerDrag(e, chip, {type: "person", id: p.id, originKey: null}));
         chip.onclick = () => {
@@ -1675,7 +1680,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     const ceoInp = make("input");
     ceoInp.value = $("ceoName").value;
     ceoInp.disabled = !editorMode;
-    if (!editorMode) ceoInp.title = "Доступно в режиме редактора (код 1996)";
+    if (!editorMode) ceoInp.title = "Доступно в режиме редактора";
     ceoInp.onchange = () => {
       if (!requireEditor()) { ceoInp.value = $("ceoName").value; return; }
       $("ceoName").value = ceoInp.value;
@@ -1695,7 +1700,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     row.appendChild(refB);
     row.appendChild(csvB);
     body.appendChild(row);
-    if (!editorMode) body.appendChild(make("p", "muted", "В режиме просмотра доступны обновление, печать и сохранение JPEG. Для изменения ФИО ГД и загрузки CSV введите код 1996 (кнопка 🔒)."));
+    if (!editorMode) body.appendChild(make("p", "muted", "В режиме просмотра доступны обновление, печать и сохранение JPEG. Для изменения ФИО ГД и загрузки CSV введите код редактора (кнопка 🔒)."));
 
     const info = make("p", "muted", "Подключено автоматически к постоянной Google Таблице совещаний (актуализация каждые 10 секунд). На iPhone используйте меню Safari «Поделиться → На экран Домой» для работы в полноэкранном режиме.");
     info.style.margin = "0";
@@ -2532,5 +2537,5 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
   setInterval(refresh, REFRESH_MS);
 })();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a593d3dda866e923',t:'MTc5NDQ2ODU4Nw=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a593d3dda866e923',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a593ee449f7cf121',t:'MTc5NDQ2OTY2OA=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a593ee449f7cf121',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
