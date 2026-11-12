@@ -96,6 +96,30 @@ body.view-mode .item[data-person], body.view-mode .chip[data-person] { cursor: d
 body.view-mode #resetBtn { display: none !important; }
 body.view-mode .counter button { opacity: .35; pointer-events: none; }
 body.view-mode .desktop-panel .item { opacity: .85; }
+/* В режиме просмотра: убрать строку стульев и кнопку масштаба, убрать вкладки нижнего меню */
+body.view-mode .controls { display: none !important; }
+body.view-mode .tray-tabs { display: none !important; }
+body.view-mode #trayContent { margin-bottom: 0; }
+/* Галочка прибытия */
+.seat .arrived-badge {
+  position: absolute; top: 2px; right: 2px; width: 19px; height: 19px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 12px; font-weight: 900; line-height: 1; z-index: 4;
+  pointer-events: auto; cursor: pointer; flex: 0 0 auto;
+}
+.seat .arrived-badge.on { background: #1a7f37; color: #fff; border: 1.5px solid #fff; box-shadow: 0 1px 4px #0003; }
+.seat .arrived-badge.off { background: #ffffffd9; color: #9aa8a0; border: 1.5px solid #b9c4bc; }
+body.view-mode .seat .arrived-badge.off { display: none; }
+body.view-mode .seat .arrived-badge { cursor: default; }
+.arrived-check {
+  display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; flex: 0 0 auto;
+  border: 1.5px solid #b9c4bc; background: #fff; color: transparent; font-size: 13px; font-weight: 900; cursor: pointer;
+}
+.arrived-check.on { background: #1a7f37; border-color: #1a7f37; color: #fff; }
+body.view-mode .arrived-check { cursor: default; }
+.chip .arrived-check { width: 18px; height: 18px; font-size: 12px; }
+.item .arrived-check { margin-right: 7px; vertical-align: -4px; }
+.sheet-arrived { display: flex; align-items: center; gap: 9px; padding: 10px 12px; border-radius: 11px; border: 1.5px solid #dde5de; background: #f9fbf9; font-size: 13.5px; font-weight: 700; width: 100%; text-align: left; }
+.sheet-arrived.on { border-color: #5d9b70; background: #e6f4ea; color: #164027; }
 .editor-code-input { width: 100%; padding: 12px; border: 1.5px solid #cbd7cd; border-radius: 11px; font-size: 20px; text-align: center; letter-spacing: 6px; font-weight: 800; }
 .editor-code-input.err { border-color: var(--danger); background: #fdf1f1; }
 
@@ -892,12 +916,13 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
 
   function layout() {
     if (!current) return null;
-    if (!layouts[current.id]) layouts[current.id] = {L: 5, R: 5, seats: {}, equipment: {}, ceoAuto: false};
+    if (!layouts[current.id]) layouts[current.id] = {L: 5, R: 5, seats: {}, equipment: {}, arrived: {}, ceoAuto: false};
     const l = layouts[current.id];
     l.L = clamp(l.L);
     l.R = clamp(l.R);
     l.seats = l.seats || {};
     l.equipment = l.equipment || {};
+    l.arrived = l.arrived || {};
     const all = members(current), valid = {};
     all.forEach(p => { valid[p.id] = 1; });
     for (const seat of Object.keys(l.seats)) {
@@ -918,7 +943,21 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       const ok = devices.some(x => x.id === d);
       if (!valid[l.equipment[d]] || !ok) delete l.equipment[d];
     }
+    for (const pid of Object.keys(l.arrived)) {
+      if (!valid[pid] || !l.arrived[pid]) delete l.arrived[pid];
+    }
     return l;
+  }
+
+  // Отметка о фактическом прибытии (только редактор)
+  function isArrived(l, pid) { return !!(l && l.arrived && l.arrived[pid]); }
+  function toggleArrived(pid) {
+    if (!requireEditor()) return;
+    const l = layout();
+    if (!l || !current) return;
+    if (!members(current).some(p => p.id === pid)) return;
+    if (l.arrived[pid]) delete l.arrived[pid]; else l.arrived[pid] = true;
+    render();
   }
 
   function computeSeatNumbers(l, all) {
@@ -1003,6 +1042,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     // Заголовки совещания (ПК + iPhone)
     $("meetingTitle").textContent = current ? current.title : "Выберите совещание";
     $("meetingMeta").textContent = current ? [current.date, current.time, current.people.length + " приглаш."].filter(Boolean).join(" · ") : "";
+    // Счётчик прибывших будет добавлен ниже, когда известна раскладка
     $("mobileMeetingTitle").textContent = current ? current.title : (meetings.length ? "Выберите совещание" : "Загрузка совещаний…");
     if (current) {
       $("mobileMeetingSub").textContent = [current.date, current.time, (current.people.length + " уч.")].filter(Boolean).join(" · ");
@@ -1032,6 +1072,12 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     $("resetBtn").disabled = !editorMode || !l;
     $("zoomBtn").disabled = !l;
     $("ceoName").disabled = !editorMode;
+    if (l && current) {
+      const allForMeta = members(current);
+      const arrivedCount = allForMeta.filter(p => isArrived(l, p.id)).length;
+      $("meetingMeta").textContent = [current.date, current.time, current.people.length + " приглаш.", "✓ прибыло: " + arrivedCount + " из " + allForMeta.length].filter(Boolean).join(" · ");
+      if (current) $("mobileMeetingSub").textContent = [current.date, current.time, (current.people.length + " уч."), "✓ " + arrivedCount].filter(Boolean).join(" · ");
+    }
     // В режиме просмотра сбрасываем выбор, чтобы нельзя было случайно редактировать
     if (!editorMode && selected) selected = null;
 
@@ -1080,7 +1126,14 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
     // Правая панель ПК: Участники без места
     free.forEach(p => {
       const pCeo = isCeo(p), pPh = p.id === "ceo";
-      const item = make("div", "item" + (pCeo && pPh ? " ceo-item" : ""), displayPersonName(p));
+      const item = make("div", "item" + (pCeo && pPh ? " ceo-item" : ""));
+      const arrivedNow = isArrived(l, p.id);
+      const chk = make("span", "arrived-check" + (arrivedNow ? " on" : ""), "✓");
+      chk.title = arrivedNow ? "Прибыл — нажмите, чтобы снять отметку (редактор)" : "Отметить прибытие (редактор)";
+      chk.onclick = e => { e.stopPropagation(); toggleArrived(p.id); };
+      chk.onpointerdown = e => e.stopPropagation();
+      item.appendChild(chk);
+      item.appendChild(make("span", "", displayPersonName(p)));
       if (pCeo && !pPh) item.appendChild(make("small", "ceo-role", "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР"));
       else if (p.role && !(pCeo && pPh)) item.appendChild(make("small", "", p.role));
       const owned = devices.filter(d => l.equipment[d.id] === p.id);
@@ -1126,8 +1179,10 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
 
   /* ---------- Нижняя панель на iPhone ---------- */
   function renderMobileTray(l, all, free) {
+    // В режиме просмотра нижнее меню — только список нераспределённых участников (вкладки скрыты CSS)
+    const effectiveTab = editorMode ? mobileTab : "people";
     document.querySelectorAll(".tray-tab").forEach(btn => {
-      btn.classList.toggle("active", btn.getAttribute("data-tab") === mobileTab);
+      btn.classList.toggle("active", btn.getAttribute("data-tab") === effectiveTab);
     });
     const freeEquipCount = l ? devices.filter(d => !l.equipment[d.id]).length : devices.length;
     $("tabPeopleCount").textContent = l ? "(" + free.length + ")" : "";
@@ -1141,7 +1196,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       return;
     }
 
-    if (mobileTab === "people") {
+    if (effectiveTab === "people") {
       if (selected && selected.type === "person") {
         const seatedNow = Object.values(l.seats).includes(selected.id);
         if (seatedNow) {
@@ -1155,7 +1210,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
         }
       }
       if (!free.length) {
-        box.appendChild(make("span", "tray-empty", "Все участники рассажены. Нажмите на любое кресло для изменений."));
+        box.appendChild(make("span", "tray-empty", editorMode ? "Все участники рассажены. Нажмите на любое кресло для изменений." : "Все участники рассажены редактором по местам."));
         return;
       }
       free.forEach(p => {
@@ -1164,9 +1219,15 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
         const chip = make("button", "chip" + (pCeo ? " ceo" : "") + (isSel ? " selected" : ""));
         chip.type = "button";
         const eqIcons = devices.filter(d => l.equipment[d.id] === p.id).map(d => d.icon).join("");
-        const wrap = make("span", "chip-main", (eqIcons ? eqIcons + " " : "") + displayPersonName(p));
+        const arrivedNow = isArrived(l, p.id);
+        const wrap = make("span", "chip-main", (arrivedNow ? "✓ " : "") + (eqIcons ? eqIcons + " " : "") + displayPersonName(p));
         if (pCeo && !pPh) wrap.appendChild(make("small", "", "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР"));
         chip.appendChild(wrap);
+        const chk = make("span", "arrived-check" + (arrivedNow ? " on" : ""), "✓");
+        chk.title = arrivedNow ? "Прибыл" : "Отметить прибытие (редактор)";
+        chk.onclick = e => { e.stopPropagation(); toggleArrived(p.id); };
+        chk.onpointerdown = e => e.stopPropagation();
+        chip.appendChild(chk);
         chip.dataset.person = p.id;
         chip.addEventListener("pointerdown", e => attachPointerDrag(e, chip, {type: "person", id: p.id, originKey: null}));
         chip.onclick = () => {
@@ -1180,7 +1241,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
         };
         box.appendChild(chip);
       });
-    } else if (mobileTab === "equip") {
+    } else if (effectiveTab === "equip") {
       devices.forEach(d => {
         const ownerId = l.equipment[d.id];
         const owner = ownerId ? all.find(p => p.id === ownerId) : null;
@@ -1341,7 +1402,13 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
           seat.appendChild(nameEl);
           if (sCeo) seat.appendChild(make("span", "ceo-tag", "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР"));
         }
-        seat.title = (person.role ? person.name + " — " + person.role : person.name) + "\n" + sideTitle(key, numMap) + "\nПеретащите пальцем/мышью вдоль стороны или на другую сторону";
+        const arrivedNow = isArrived(l, person.id);
+        const badge = make("span", "arrived-badge " + (arrivedNow ? "on" : "off"), "✓");
+        badge.title = arrivedNow ? "Прибыл — нажмите, чтобы снять (редактор)" : "Отметить прибытие (редактор)";
+        badge.addEventListener("click", e => { e.stopPropagation(); toggleArrived(person.id); });
+        badge.addEventListener("pointerdown", e => e.stopPropagation());
+        seat.appendChild(badge);
+        seat.title = (person.role ? person.name + " — " + person.role : person.name) + "\n" + sideTitle(key, numMap) + (arrivedNow ? "\n✓ Прибыл" : "") + "\nПеретащите пальцем/мышью вдоль стороны или на другую сторону";
         seat.dataset.person = person.id;
         seat.dataset.seatKey = key;
         // Pointer Events: работает и пальцем на телефоне, и мышью на ПК (вместо HTML5 DnD)
@@ -1492,6 +1559,12 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       actionsRow.appendChild(freeBtn);
       body.appendChild(actionsRow);
 
+      const arrivedNow = isArrived(l, occupant.id);
+      const arrivedBtn = make("button", "sheet-arrived" + (arrivedNow ? " on" : ""), (arrivedNow ? "✓ Прибыл — нажмите, чтобы снять отметку" : "☐ Не прибыл — нажмите, чтобы отметить прибытие"));
+      arrivedBtn.type = "button";
+      arrivedBtn.onclick = () => { toggleArrived(occupant.id); };
+      body.appendChild(arrivedBtn);
+
       const eqSec = make("div");
       eqSec.appendChild(make("div", "sheet-sec-title", "Оборудование участника (нажмите для вкл/выкл)"));
       const eqGrid = make("div", "sheet-equip-grid");
@@ -1529,7 +1602,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
           const pCeo = isCeo(p), pPh = p.id === "ceo";
           const btn = make("button", "sheet-person" + (pCeo ? " ceo" : ""));
           btn.type = "button";
-          const left = make("span", "", displayPersonName(p));
+          const left = make("span", "", (isArrived(l, p.id) ? "✓ " : "") + displayPersonName(p));
           if (pCeo && !pPh) left.appendChild(make("small", "ceo-sub", "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР"));
           else if (p.role && !pCeo) left.appendChild(make("small", "", p.role));
           const eqIcons = devices.filter(d => l.equipment[d.id] === p.id).map(d => d.icon).join(" ");
@@ -1555,7 +1628,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
           const pCeo = isCeo(p);
           const btn = make("button", "sheet-person" + (pCeo ? " ceo" : ""));
           btn.type = "button";
-          const left = make("span", "", displayPersonName(p));
+          const left = make("span", "", (isArrived(l, p.id) ? "✓ " : "") + displayPersonName(p));
           left.appendChild(make("small", "", "Сейчас: " + sideTitle(seatedMap[p.id], numMap)));
           btn.appendChild(left);
           btn.onclick = () => {
@@ -2071,6 +2144,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
       l.R = 5;
       l.seats = {};
       l.equipment = {};
+      l.arrived = {};
       l.ceoAuto = false;
       selected = null;
       closeSheet();
@@ -2330,6 +2404,15 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
         c.fillStyle = "#7a8780";
         c.fillText(cap, cx + 12, cy + ch / 2 + 7);
       }
+      if (p && isArrived(l, p.id)) {
+        const bx = cx + cw - 18, by = cy + 18, br = 13;
+        c.beginPath(); c.arc(bx, by, br, 0, Math.PI * 2);
+        c.fillStyle = "#1a7f37"; c.fill();
+        c.lineWidth = 2; c.strokeStyle = "#ffffff"; c.stroke();
+        c.fillStyle = "#ffffff"; c.font = "bold 16px " + FONT; c.textAlign = "center"; c.textBaseline = "middle";
+        c.fillText("✓", bx, by + 1);
+        c.textAlign = "left"; c.textBaseline = "alphabetic";
+      }
       return p;
     };
 
@@ -2374,7 +2457,7 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
 
     c.fillStyle = "#607168";
     c.font = "19px " + FONT;
-    c.fillText("Стульев слева: " + l.L + " · справа: " + l.R + " · участников: " + people.length, 70, 1835);
+    c.fillText("Стульев слева: " + l.L + " · справа: " + l.R + " · участников: " + people.length + " · ✓ прибыло: " + people.filter(pp => isArrived(l, pp.id)).length, 70, 1835);
     c.fillText("Оборудование: мышь · клавиатура · телефонная трубка", 70, 1870);
     c.fillText("Сформировано: " + new Date().toLocaleString("ru-RU"), 70, 1905);
     return canvas.toDataURL("image/jpeg", 0.94);
@@ -2449,5 +2532,5 @@ body.drag-device .dock, body.has-selected-device .dock { background: #fff8ea99; 
   setInterval(refresh, REFRESH_MS);
 })();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58c11f87dadf123',t:'MTc5NDM4NzI0NA=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58c11f87dadf123',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a593d3dda866e923',t:'MTc5NDQ2ODU4Nw=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a593d3dda866e923',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
